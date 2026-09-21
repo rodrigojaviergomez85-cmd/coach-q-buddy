@@ -4,7 +4,7 @@ import { Line, LineChart, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { formatDateSV } from "@/lib/date";
-import { normalizeAois, normalizeTextList, reportShareText, secondsToMarker, zoomMarkerUrl, type ClassTimelineData, type ReportData } from "@/lib/monitoring";
+import { kudosAoisHtml, normalizeAois, normalizeTextList, reportShareText, secondsToMarker, zoomMarkerUrl, type ClassTimelineData, type ReportData } from "@/lib/monitoring";
 import { quickRead, type TranscriptConfig } from "@/lib/transcript";
 import { cn } from "@/lib/utils";
 import { AreaBar, BlocksChart, ClassTimeline, ItemIcon, PhraseChips, ScoreCircle, StudentBars, TalkTimePie, TrafficLight } from "./ReportVisuals";
@@ -43,6 +43,23 @@ export function MonitoringReport({ report, internal = false, shareUrl }: { repor
   const passing = evaluated.length ? Math.round((evaluated.filter((s) => s.goal).length / evaluated.length) * 100) : 0;
   const calibration = evaluated.filter((s) => s.phrase && s.coach_phrase && s.phrase !== s.coach_phrase).length;
   const timeline = m.class_timeline as ClassTimelineData | null | undefined;
+
+  async function copyKudosAois() {
+    const { html, text } = kudosAoisHtml(kudos, aois);
+    try {
+      if (typeof ClipboardItem !== "undefined") {
+        await navigator.clipboard.write([new ClipboardItem({
+          "text/html": new Blob([html], { type: "text/html" }),
+          "text/plain": new Blob([text], { type: "text/plain" }),
+        })]);
+      } else {
+        await navigator.clipboard.writeText(text);
+      }
+      toast.success("Kudos y AOIs copiados");
+    } catch {
+      toast.error("No se pudo copiar");
+    }
+  }
 
   return <><div className="no-print mx-auto mb-4 flex max-w-[900px] justify-end"><Button variant="outline" onClick={() => setPresenting(true)}><Maximize2 className="size-4" /> Presentar</Button></div><article className="monitoring-report mx-auto max-w-[900px] space-y-6">
     <header className="flex flex-col gap-5 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
