@@ -15,6 +15,6 @@ function ReportPage() {
   const query = useQuery({ queryKey: ["monitoring-report", id], queryFn: () => fetchInternalReport(id) });
   if (query.isLoading) return <p className="text-sm text-muted-foreground">Cargando reporte…</p>;
   if (query.isError || !query.data) return <div className="rounded-lg border border-dashed p-12 text-center"><p className="font-semibold">No pudimos abrir este monitoreo.</p><Link to="/monitoreos" className="mt-2 inline-block text-sm text-primary">Volver a monitoreos</Link></div>;
-  const shareUrl = query.data.monitoring.status === "enviado" ? `${window.location.origin}/r/${(query.data.monitoring as typeof query.data.monitoring & { share_token?: string }).share_token ?? ""}` : undefined;
+  const shareUrl = query.data.monitoring.status === "enviado" && query.data.monitoring.share_token ? `${window.location.origin}/r/${query.data.monitoring.share_token}` : undefined;
   return <><div className="no-print mb-6 flex items-center justify-between"><Button asChild variant="ghost"><Link to="/monitoreos"><ArrowLeft className="size-4" /> Monitoreos</Link></Button><Button asChild variant="outline"><Link to="/monitoreos/$id/editar" params={{ id }}><Pencil className="size-4" /> Editar</Link></Button></div><MonitoringReport report={query.data} internal shareUrl={shareUrl} /></>;
 }

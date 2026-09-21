@@ -107,7 +107,7 @@ export interface ReportData {
     bonus_total: number | null; penalty_applied: boolean; final_score: number | null;
     result_phrase: string | null; customer_expectation: string | null; kudos: JsonValue;
     aois: JsonValue; main_aoi: string | null; previous_aois: JsonValue; transcript_metrics: Metrics | null;
-    general_comments: string | null; created_at?: string; updated_at?: string;
+    general_comments: string | null; share_token?: string | null; created_at?: string; updated_at?: string;
   };
   answers: Array<MonitoringAnswer & { id?: string; item: MonitoringItem }>;
   students: Array<{ student_number: number | null; student_name: string | null; gr: number | null; pr: number | null; fl: number | null; co: number | null; in: number | null; score: number | null; phrase: string | null; goal: boolean | null; coach_phrase: string | null; comment: string | null }>;
