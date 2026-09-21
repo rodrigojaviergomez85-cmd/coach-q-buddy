@@ -1,5 +1,7 @@
 import type { Metrics } from "./transcript";
 
+export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue | undefined };
+
 export type AnswerValue = "" | "si" | "no" | "na";
 
 export interface MonitoringItem {
@@ -56,12 +58,12 @@ export function calculateStudent(values: Pick<StudentDraft, "gr" | "pr" | "fl" |
   return { score, phrase: studentPhrase(score) };
 }
 
-export function normalizeTextList(value: unknown): string[] {
+export function normalizeTextList(value: JsonValue | undefined): string[] {
   if (!Array.isArray(value)) return [];
   return value.map((entry) => typeof entry === "string" ? entry : String((entry as { text?: unknown })?.text ?? "")).filter(Boolean);
 }
 
-export function normalizeAois(value: unknown): AoiEntry[] {
+export function normalizeAois(value: JsonValue | undefined): AoiEntry[] {
   if (!Array.isArray(value)) return [];
   return value.map((entry) => typeof entry === "string"
     ? { text: entry }
@@ -69,7 +71,7 @@ export function normalizeAois(value: unknown): AoiEntry[] {
     .filter((entry) => entry.text);
 }
 
-export function resolvedAois(previous: unknown, currentAois: AoiEntry[], answers: MonitoringAnswer[]): number {
+export function resolvedAois(previous: JsonValue | undefined, currentAois: AoiEntry[], answers: MonitoringAnswer[]): number {
   const previousTexts = normalizeTextList(previous).map((text) => text.trim().toLowerCase());
   const yesIds = new Set(answers.filter((answer) => answer.result === "si").map((answer) => answer.item_id));
   const resolvedTexts = new Set(
@@ -101,12 +103,12 @@ export interface ReportData {
     id: string; class_date: string | null; qa_date: string | null; syllabus?: string | null;
     schedule?: string | null; level?: string | null; status: string; base_score: number | null;
     bonus_total: number | null; penalty_applied: boolean; final_score: number | null;
-    result_phrase: string | null; customer_expectation: string | null; kudos: unknown;
-    aois: unknown; main_aoi: string | null; previous_aois: unknown; transcript_metrics: Metrics | null;
+    result_phrase: string | null; customer_expectation: string | null; kudos: JsonValue;
+    aois: JsonValue; main_aoi: string | null; previous_aois: JsonValue; transcript_metrics: Metrics | null;
     general_comments: string | null; created_at?: string; updated_at?: string;
   };
   answers: Array<MonitoringAnswer & { id?: string; item: MonitoringItem }>;
   students: Array<{ student_number: number | null; student_name: string | null; gr: number | null; pr: number | null; fl: number | null; co: number | null; in: number | null; score: number | null; phrase: string | null; goal: boolean | null; coach_phrase: string | null; comment: string | null }>;
-  previous: { id?: string; date: string | null; final_score: number | null; students_pct: number | null; aois?: unknown; main_aoi?: string | null } | null;
+  previous: { id?: string; date: string | null; final_score: number | null; students_pct: number | null; aois?: JsonValue; main_aoi?: string | null } | null;
   recent_scores: Array<{ date: string | null; score: number }>;
 }
