@@ -437,13 +437,13 @@ function CoachesPage() {
             <tbody className="divide-y">
               {coachesQuery.isLoading ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">
+                  <td colSpan={12} className="px-4 py-10 text-center text-muted-foreground">
                     {t("loading")}
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">
+                  <td colSpan={12} className="px-4 py-10 text-center text-muted-foreground">
                     {t("empty")}
                   </td>
                 </tr>
