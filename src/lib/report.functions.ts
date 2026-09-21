@@ -21,7 +21,7 @@ export const submitCoachResponse = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: accepted, error } = await supabaseAdmin.rpc("submit_coach_response", {
-      _token: data.token, _summary: data.summary, _commitment: data.commitment, _counter: data.counter || null,
+      _token: data.token, _summary: data.summary, _commitment: data.commitment, _counter: data.counter || undefined,
     });
     if (error) throw new Error("No se pudo guardar tu respuesta.");
     if (!accepted) throw new Error("Esta respuesta ya fue enviada o el enlace ya no está disponible.");
