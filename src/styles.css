@@ -162,3 +162,10 @@
   background-color: color-mix(in oklab, var(--destructive) 14%, transparent);
   color: color-mix(in oklab, var(--destructive) 82%, black);
 }
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white !important; }
+  .monitoring-report { max-width: none !important; }
+  .monitoring-report section, .monitoring-report header { break-inside: avoid; }
+}

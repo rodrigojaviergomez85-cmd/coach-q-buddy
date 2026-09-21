@@ -15,9 +15,13 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedAnalizadorRouteImport } from './routes/_authenticated/analizador'
 import { Route as AuthenticatedCoachesRouteImport } from './routes/_authenticated/coaches'
 import { Route as AuthenticatedConfiguracionRouteImport } from './routes/_authenticated/configuracion'
-import { Route as AuthenticatedMonitoreosRouteImport } from './routes/_authenticated/monitoreos'
+import { Route as RTokenRouteImport } from './routes/r.$token'
+import { Route as AuthenticatedMonitoreosIndexRouteImport } from './routes/_authenticated/monitoreos.index'
+import { Route as AuthenticatedMonitoreosIdRouteImport } from './routes/_authenticated/monitoreos.$id'
+import { Route as AuthenticatedMonitoreosNuevoRouteImport } from './routes/_authenticated/monitoreos.nuevo'
 import { Route as AuthenticatedPlantillasIndexRouteImport } from './routes/_authenticated/plantillas.index'
 import { Route as AuthenticatedPlantillasTemplateIdRouteImport } from './routes/_authenticated/plantillas.$templateId'
+import { Route as AuthenticatedMonitoreosIdEditarRouteImport } from './routes/_authenticated/monitoreos.$id.editar'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -49,11 +53,29 @@ const AuthenticatedConfiguracionRoute =
     path: '/configuracion',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedMonitoreosRoute = AuthenticatedMonitoreosRouteImport.update({
-  id: '/monitoreos',
-  path: '/monitoreos',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const RTokenRoute = RTokenRouteImport.update({
+  id: '/r/$token',
+  path: '/r/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedMonitoreosIndexRoute =
+  AuthenticatedMonitoreosIndexRouteImport.update({
+    id: '/monitoreos/',
+    path: '/monitoreos/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedMonitoreosIdRoute =
+  AuthenticatedMonitoreosIdRouteImport.update({
+    id: '/monitoreos/$id',
+    path: '/monitoreos/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedMonitoreosNuevoRoute =
+  AuthenticatedMonitoreosNuevoRouteImport.update({
+    id: '/monitoreos/nuevo',
+    path: '/monitoreos/nuevo',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlantillasIndexRoute =
   AuthenticatedPlantillasIndexRouteImport.update({
     id: '/plantillas/',
@@ -66,6 +88,12 @@ const AuthenticatedPlantillasTemplateIdRoute =
     path: '/plantillas/$templateId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMonitoreosIdEditarRoute =
+  AuthenticatedMonitoreosIdEditarRouteImport.update({
+    id: '/editar',
+    path: '/editar',
+    getParentRoute: () => AuthenticatedMonitoreosIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -73,9 +101,13 @@ export interface FileRoutesByFullPath {
   '/analizador': typeof AuthenticatedAnalizadorRoute
   '/coaches': typeof AuthenticatedCoachesRoute
   '/configuracion': typeof AuthenticatedConfiguracionRoute
-  '/monitoreos': typeof AuthenticatedMonitoreosRoute
+  '/r/$token': typeof RTokenRoute
+  '/monitoreos/$id': typeof AuthenticatedMonitoreosIdRouteWithChildren
+  '/monitoreos/nuevo': typeof AuthenticatedMonitoreosNuevoRoute
   '/plantillas/$templateId': typeof AuthenticatedPlantillasTemplateIdRoute
+  '/monitoreos/': typeof AuthenticatedMonitoreosIndexRoute
   '/plantillas/': typeof AuthenticatedPlantillasIndexRoute
+  '/monitoreos/$id/editar': typeof AuthenticatedMonitoreosIdEditarRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -83,9 +115,13 @@ export interface FileRoutesByTo {
   '/analizador': typeof AuthenticatedAnalizadorRoute
   '/coaches': typeof AuthenticatedCoachesRoute
   '/configuracion': typeof AuthenticatedConfiguracionRoute
-  '/monitoreos': typeof AuthenticatedMonitoreosRoute
+  '/r/$token': typeof RTokenRoute
+  '/monitoreos/$id': typeof AuthenticatedMonitoreosIdRouteWithChildren
+  '/monitoreos/nuevo': typeof AuthenticatedMonitoreosNuevoRoute
   '/plantillas/$templateId': typeof AuthenticatedPlantillasTemplateIdRoute
+  '/monitoreos': typeof AuthenticatedMonitoreosIndexRoute
   '/plantillas': typeof AuthenticatedPlantillasIndexRoute
+  '/monitoreos/$id/editar': typeof AuthenticatedMonitoreosIdEditarRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,9 +131,13 @@ export interface FileRoutesById {
   '/_authenticated/analizador': typeof AuthenticatedAnalizadorRoute
   '/_authenticated/coaches': typeof AuthenticatedCoachesRoute
   '/_authenticated/configuracion': typeof AuthenticatedConfiguracionRoute
-  '/_authenticated/monitoreos': typeof AuthenticatedMonitoreosRoute
+  '/r/$token': typeof RTokenRoute
+  '/_authenticated/monitoreos/$id': typeof AuthenticatedMonitoreosIdRouteWithChildren
+  '/_authenticated/monitoreos/nuevo': typeof AuthenticatedMonitoreosNuevoRoute
   '/_authenticated/plantillas/$templateId': typeof AuthenticatedPlantillasTemplateIdRoute
+  '/_authenticated/monitoreos/': typeof AuthenticatedMonitoreosIndexRoute
   '/_authenticated/plantillas/': typeof AuthenticatedPlantillasIndexRoute
+  '/_authenticated/monitoreos/$id/editar': typeof AuthenticatedMonitoreosIdEditarRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,9 +147,13 @@ export interface FileRouteTypes {
     | '/analizador'
     | '/coaches'
     | '/configuracion'
-    | '/monitoreos'
+    | '/r/$token'
+    | '/monitoreos/$id'
+    | '/monitoreos/nuevo'
     | '/plantillas/$templateId'
+    | '/monitoreos/'
     | '/plantillas/'
+    | '/monitoreos/$id/editar'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -117,9 +161,13 @@ export interface FileRouteTypes {
     | '/analizador'
     | '/coaches'
     | '/configuracion'
-    | '/monitoreos'
+    | '/r/$token'
+    | '/monitoreos/$id'
+    | '/monitoreos/nuevo'
     | '/plantillas/$templateId'
+    | '/monitoreos'
     | '/plantillas'
+    | '/monitoreos/$id/editar'
   id:
     | '__root__'
     | '/'
@@ -128,15 +176,20 @@ export interface FileRouteTypes {
     | '/_authenticated/analizador'
     | '/_authenticated/coaches'
     | '/_authenticated/configuracion'
-    | '/_authenticated/monitoreos'
+    | '/r/$token'
+    | '/_authenticated/monitoreos/$id'
+    | '/_authenticated/monitoreos/nuevo'
     | '/_authenticated/plantillas/$templateId'
+    | '/_authenticated/monitoreos/'
     | '/_authenticated/plantillas/'
+    | '/_authenticated/monitoreos/$id/editar'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
+  RTokenRoute: typeof RTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -183,11 +236,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConfiguracionRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/monitoreos': {
-      id: '/_authenticated/monitoreos'
+    '/r/$token': {
+      id: '/r/$token'
+      path: '/r/$token'
+      fullPath: '/r/$token'
+      preLoaderRoute: typeof RTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/monitoreos/': {
+      id: '/_authenticated/monitoreos/'
       path: '/monitoreos'
-      fullPath: '/monitoreos'
-      preLoaderRoute: typeof AuthenticatedMonitoreosRouteImport
+      fullPath: '/monitoreos/'
+      preLoaderRoute: typeof AuthenticatedMonitoreosIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/monitoreos/$id': {
+      id: '/_authenticated/monitoreos/$id'
+      path: '/monitoreos/$id'
+      fullPath: '/monitoreos/$id'
+      preLoaderRoute: typeof AuthenticatedMonitoreosIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/monitoreos/nuevo': {
+      id: '/_authenticated/monitoreos/nuevo'
+      path: '/monitoreos/nuevo'
+      fullPath: '/monitoreos/nuevo'
+      preLoaderRoute: typeof AuthenticatedMonitoreosNuevoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/plantillas/': {
@@ -204,15 +278,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlantillasTemplateIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/monitoreos/$id/editar': {
+      id: '/_authenticated/monitoreos/$id/editar'
+      path: '/editar'
+      fullPath: '/monitoreos/$id/editar'
+      preLoaderRoute: typeof AuthenticatedMonitoreosIdEditarRouteImport
+      parentRoute: typeof AuthenticatedMonitoreosIdRoute
+    }
   }
 }
+
+interface AuthenticatedMonitoreosIdRouteChildren {
+  AuthenticatedMonitoreosIdEditarRoute: typeof AuthenticatedMonitoreosIdEditarRoute
+}
+
+const AuthenticatedMonitoreosIdRouteChildren: AuthenticatedMonitoreosIdRouteChildren =
+  {
+    AuthenticatedMonitoreosIdEditarRoute: AuthenticatedMonitoreosIdEditarRoute,
+  }
+
+const AuthenticatedMonitoreosIdRouteWithChildren =
+  AuthenticatedMonitoreosIdRoute._addFileChildren(
+    AuthenticatedMonitoreosIdRouteChildren,
+  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalizadorRoute: typeof AuthenticatedAnalizadorRoute
   AuthenticatedCoachesRoute: typeof AuthenticatedCoachesRoute
   AuthenticatedConfiguracionRoute: typeof AuthenticatedConfiguracionRoute
-  AuthenticatedMonitoreosRoute: typeof AuthenticatedMonitoreosRoute
+  AuthenticatedMonitoreosIdRoute: typeof AuthenticatedMonitoreosIdRouteWithChildren
+  AuthenticatedMonitoreosNuevoRoute: typeof AuthenticatedMonitoreosNuevoRoute
   AuthenticatedPlantillasTemplateIdRoute: typeof AuthenticatedPlantillasTemplateIdRoute
+  AuthenticatedMonitoreosIndexRoute: typeof AuthenticatedMonitoreosIndexRoute
   AuthenticatedPlantillasIndexRoute: typeof AuthenticatedPlantillasIndexRoute
 }
 
@@ -220,9 +317,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalizadorRoute: AuthenticatedAnalizadorRoute,
   AuthenticatedCoachesRoute: AuthenticatedCoachesRoute,
   AuthenticatedConfiguracionRoute: AuthenticatedConfiguracionRoute,
-  AuthenticatedMonitoreosRoute: AuthenticatedMonitoreosRoute,
+  AuthenticatedMonitoreosIdRoute: AuthenticatedMonitoreosIdRouteWithChildren,
+  AuthenticatedMonitoreosNuevoRoute: AuthenticatedMonitoreosNuevoRoute,
   AuthenticatedPlantillasTemplateIdRoute:
     AuthenticatedPlantillasTemplateIdRoute,
+  AuthenticatedMonitoreosIndexRoute: AuthenticatedMonitoreosIndexRoute,
   AuthenticatedPlantillasIndexRoute: AuthenticatedPlantillasIndexRoute,
 }
 
@@ -233,6 +332,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   LoginRoute: LoginRoute,
+  RTokenRoute: RTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
