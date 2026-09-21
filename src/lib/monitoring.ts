@@ -53,6 +53,7 @@ export function studentPhrase(score: number): string {
 
 export function calculateStudent(values: Pick<StudentDraft, "gr" | "pr" | "fl" | "co" | "in">) {
   const numbers = [values.gr, values.pr, values.fl, values.co, values.in]
+    .filter((value) => value.trim() !== "")
     .map(Number)
     .filter(Number.isFinite);
   if (numbers.length === 0) return { score: null, phrase: "" };
