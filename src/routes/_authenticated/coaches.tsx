@@ -421,6 +421,10 @@ function CoachesPage() {
                 <th className="px-4 py-3 font-medium">{t("full_name")}</th>
                 <th className="px-4 py-3 font-medium">{t("lob")}</th>
                 <th className="px-4 py-3 font-medium">{t("level")}</th>
+                <th className="px-4 py-3 font-medium">País</th>
+                <th className="px-4 py-3 font-medium">CSAT</th>
+                <th className="px-4 py-3 font-medium">Antigüedad</th>
+                <th className="px-4 py-3 font-medium">Teléfono</th>
                 <th className="px-4 py-3 font-medium">{t("schedule")}</th>
                 {canSeeAll ? (
                   <th className="px-4 py-3 font-medium">{t("coordinator")}</th>
@@ -458,6 +462,12 @@ function CoachesPage() {
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{coach.lob || "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{coach.level || "—"}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{coach.country || "—"}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{coach.csat_level || "—"}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {coach.tenure_months != null ? `${Number(coach.tenure_months).toFixed(0)} m` : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{coach.phone || "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{coach.schedule || "—"}</td>
                       {canSeeAll ? (
                         <td className="px-4 py-3 text-muted-foreground">
