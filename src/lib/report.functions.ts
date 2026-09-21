@@ -10,3 +10,20 @@ export const getPublicReport = createServerFn({ method: "GET" })
     if (error) throw new Error("No se pudo abrir este reporte.");
     return (report as unknown as ReportData | null) ?? null;
   });
+
+export const submitCoachResponse = createServerFn({ method: "POST" })
+  .inputValidator((input) => z.object({
+    token: z.string().uuid(),
+    summary: z.string().trim().min(1).max(2000),
+    commitment: z.string().trim().min(1).max(2000),
+    counter: z.string().trim().max(2000).optional(),
+  }).parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: accepted, error } = await supabaseAdmin.rpc("submit_coach_response", {
+      _token: data.token, _summary: data.summary, _commitment: data.commitment, _counter: data.counter || null,
+    });
+    if (error) throw new Error("No se pudo guardar tu respuesta.");
+    if (!accepted) throw new Error("Esta respuesta ya fue enviada o el enlace ya no está disponible.");
+    return { ok: true };
+  });

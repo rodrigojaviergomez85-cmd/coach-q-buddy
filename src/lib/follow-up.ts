@@ -1,5 +1,5 @@
 import type { ClassPhase, ClassPhaseKind } from "./monitoring";
-import type { Segment, SpeakerRole } from "./transcript";
+import { speakerKey, type Segment, type SpeakerRole } from "./transcript";
 
 export interface MonthlyAlertInput {
   monitored: number;
@@ -20,7 +20,7 @@ export function buildPhases(starts: Partial<Record<ClassPhaseKind, number>>, dur
 export function studentsSpeakingInPhase(segments: Segment[], roles: SpeakerRole[], phase: ClassPhase | undefined): string[] {
   if (!phase) return [];
   const studentKeys = new Set(roles.filter((role) => role.role === "alumno").map((role) => role.key));
-  return [...new Set(segments.filter((segment) => segment.end > phase.start && segment.start < phase.end && studentKeys.has(segment.speakerKey)).map((segment) => segment.speaker))].sort();
+  return [...new Set(segments.filter((segment) => segment.end > phase.start && segment.start < phase.end && studentKeys.has(speakerKey(segment.speaker))).map((segment) => segment.speaker))].sort();
 }
 
 export function monthlyAlerts(input: MonthlyAlertInput): string[] {
