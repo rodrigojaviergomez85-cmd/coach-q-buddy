@@ -16,11 +16,11 @@ export async function fetchInternalReport(id: string): Promise<ReportData | null
   ]);
   const prevMetrics = previous?.transcript_metrics as { students_pct?: number } | null;
   return {
-    coach: { name: coach?.full_name ?? "Coach", lob: coach?.lob, level: coach?.level },
-    template: { id: template?.id, name: template?.name ?? "Monitoreo", code: template?.code ?? "", scoring: template?.scoring, has_student_grid: template?.has_student_grid },
+    coach: { name: coach?.full_name ?? "Coach", lob: coach?.lob ?? null, level: coach?.level ?? null },
+    template: { id: template?.id ?? "", name: template?.name ?? "Monitoreo", code: template?.code ?? "", scoring: template?.scoring ?? null, has_student_grid: template?.has_student_grid ?? false },
     coordinator: { name: profile?.full_name || profile?.email || "—" },
     monitoring: m as unknown as ReportData["monitoring"],
-    answers: (answers ?? []).filter((a) => a.item).map((a) => ({ ...a, result: a.result as "si" | "no" | "na", comment: a.comment ?? "", item: a.item as unknown as ReportData["answers"][number]["item"] })),
+    answers: (answers ?? []).filter((a) => a.item && a.item_id).map((a) => ({ ...a, item_id: a.item_id ?? "", result: a.result as "si" | "no" | "na", comment: a.comment ?? "", item: a.item as unknown as ReportData["answers"][number]["item"] })),
     students: students ?? [],
     previous: previous ? { id: previous.id, date: previous.class_date, final_score: previous.final_score, students_pct: prevMetrics?.students_pct ?? null, aois: previous.aois, main_aoi: previous.main_aoi } : null,
     recent_scores: (recent ?? []).reverse().map((r) => ({ date: r.class_date, score: Number(r.final_score) })),
