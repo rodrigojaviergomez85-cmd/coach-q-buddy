@@ -15,6 +15,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedCoachesRouteImport } from './routes/_authenticated/coaches'
 import { Route as AuthenticatedMonitoreosRouteImport } from './routes/_authenticated/monitoreos'
 import { Route as AuthenticatedPlantillasIndexRouteImport } from './routes/_authenticated/plantillas.index'
+import { Route as AuthenticatedPlantillasTemplateIdRouteImport } from './routes/_authenticated/plantillas.$templateId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,12 +47,19 @@ const AuthenticatedPlantillasIndexRoute =
     path: '/plantillas/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlantillasTemplateIdRoute =
+  AuthenticatedPlantillasTemplateIdRouteImport.update({
+    id: '/plantillas/$templateId',
+    path: '/plantillas/$templateId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/coaches': typeof AuthenticatedCoachesRoute
   '/monitoreos': typeof AuthenticatedMonitoreosRoute
+  '/plantillas/$templateId': typeof AuthenticatedPlantillasTemplateIdRoute
   '/plantillas/': typeof AuthenticatedPlantillasIndexRoute
 }
 export interface FileRoutesByTo {
@@ -59,6 +67,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/coaches': typeof AuthenticatedCoachesRoute
   '/monitoreos': typeof AuthenticatedMonitoreosRoute
+  '/plantillas/$templateId': typeof AuthenticatedPlantillasTemplateIdRoute
   '/plantillas': typeof AuthenticatedPlantillasIndexRoute
 }
 export interface FileRoutesById {
@@ -68,13 +77,26 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_authenticated/coaches': typeof AuthenticatedCoachesRoute
   '/_authenticated/monitoreos': typeof AuthenticatedMonitoreosRoute
+  '/_authenticated/plantillas/$templateId': typeof AuthenticatedPlantillasTemplateIdRoute
   '/_authenticated/plantillas/': typeof AuthenticatedPlantillasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/coaches' | '/monitoreos' | '/plantillas/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/coaches'
+    | '/monitoreos'
+    | '/plantillas/$templateId'
+    | '/plantillas/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/coaches' | '/monitoreos' | '/plantillas'
+  to:
+    | '/'
+    | '/login'
+    | '/coaches'
+    | '/monitoreos'
+    | '/plantillas/$templateId'
+    | '/plantillas'
   id:
     | '__root__'
     | '/'
@@ -82,6 +104,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_authenticated/coaches'
     | '/_authenticated/monitoreos'
+    | '/_authenticated/plantillas/$templateId'
     | '/_authenticated/plantillas/'
   fileRoutesById: FileRoutesById
 }
@@ -135,18 +158,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlantillasIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/plantillas/$templateId': {
+      id: '/_authenticated/plantillas/$templateId'
+      path: '/plantillas/$templateId'
+      fullPath: '/plantillas/$templateId'
+      preLoaderRoute: typeof AuthenticatedPlantillasTemplateIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCoachesRoute: typeof AuthenticatedCoachesRoute
   AuthenticatedMonitoreosRoute: typeof AuthenticatedMonitoreosRoute
+  AuthenticatedPlantillasTemplateIdRoute: typeof AuthenticatedPlantillasTemplateIdRoute
   AuthenticatedPlantillasIndexRoute: typeof AuthenticatedPlantillasIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCoachesRoute: AuthenticatedCoachesRoute,
   AuthenticatedMonitoreosRoute: AuthenticatedMonitoreosRoute,
+  AuthenticatedPlantillasTemplateIdRoute:
+    AuthenticatedPlantillasTemplateIdRoute,
   AuthenticatedPlantillasIndexRoute: AuthenticatedPlantillasIndexRoute,
 }
 
