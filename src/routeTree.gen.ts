@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedCoachesRouteImport } from './routes/_authenticated/coaches'
+import { Route as AuthenticatedMonitoreosRouteImport } from './routes/_authenticated/monitoreos'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -33,16 +34,23 @@ const AuthenticatedCoachesRoute = AuthenticatedCoachesRouteImport.update({
   path: '/coaches',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMonitoreosRoute = AuthenticatedMonitoreosRouteImport.update({
+  id: '/monitoreos',
+  path: '/monitoreos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/coaches': typeof AuthenticatedCoachesRoute
+  '/monitoreos': typeof AuthenticatedMonitoreosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/coaches': typeof AuthenticatedCoachesRoute
+  '/monitoreos': typeof AuthenticatedMonitoreosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -50,14 +58,20 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/coaches': typeof AuthenticatedCoachesRoute
+  '/_authenticated/monitoreos': typeof AuthenticatedMonitoreosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/coaches'
+  fullPaths: '/' | '/login' | '/coaches' | '/monitoreos'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/coaches'
+  to: '/' | '/login' | '/coaches' | '/monitoreos'
   id:
-    '__root__' | '/' | '/_authenticated' | '/login' | '/_authenticated/coaches'
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/login'
+    | '/_authenticated/coaches'
+    | '/_authenticated/monitoreos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -96,15 +110,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCoachesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/monitoreos': {
+      id: '/_authenticated/monitoreos'
+      path: '/monitoreos'
+      fullPath: '/monitoreos'
+      preLoaderRoute: typeof AuthenticatedMonitoreosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCoachesRoute: typeof AuthenticatedCoachesRoute
+  AuthenticatedMonitoreosRoute: typeof AuthenticatedMonitoreosRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCoachesRoute: AuthenticatedCoachesRoute,
+  AuthenticatedMonitoreosRoute: AuthenticatedMonitoreosRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
