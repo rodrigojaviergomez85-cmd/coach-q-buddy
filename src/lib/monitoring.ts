@@ -124,6 +124,29 @@ export function resolvedAois(previous: JsonValue | undefined, currentAois: AoiEn
   return previousTexts.filter((text) => resolvedTexts.has(text)).length;
 }
 
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+export function kudosAoisHtml(kudos: string[], aois: AoiEntry[]): { html: string; text: string } {
+  const kudosItems = kudos.map((k) => `<li>${escapeHtml(k)}</li>`).join("");
+  const aoisItems = aois.map((a) => `<li>${escapeHtml(a.text)}</li>`).join("");
+  const html = [
+    "<h3>Kudos</h3>",
+    kudos.length > 0 ? `<ul>${kudosItems}</ul>` : "<p>Sin kudos registrados.</p>",
+    "<h3>AOIs</h3>",
+    aois.length > 0 ? `<ul>${aoisItems}</ul>` : "<p>Sin AOIs registrados.</p>",
+  ].join("");
+  const text = [
+    "Kudos",
+    ...(kudos.length > 0 ? kudos.map((k) => `- ${k}`) : ["Sin kudos registrados."]),
+    "",
+    "AOIs",
+    ...(aois.length > 0 ? aois.map((a) => `- ${a.text}`) : ["Sin AOIs registrados."]),
+  ].join("\n");
+  return { html, text };
+}
+
 export function reportShareText(report: ReportData, url: string, showScore = true): string {
   const m = report.monitoring;
   const kudos = normalizeTextList(m.kudos)[0] ?? "—";
