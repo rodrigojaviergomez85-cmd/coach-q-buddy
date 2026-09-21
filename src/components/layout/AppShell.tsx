@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import {
   ClipboardList,
+  BarChart3,
   GraduationCap,
   LogOut,
   Menu,
