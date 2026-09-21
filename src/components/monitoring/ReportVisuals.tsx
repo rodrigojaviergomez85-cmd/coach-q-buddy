@@ -14,9 +14,14 @@ export function scoreTone(score: number | null | undefined) {
 
 const toneClasses = { success: "border-success bg-success/10 text-success", primary: "border-primary bg-primary/10 text-primary", warning: "border-warning bg-warning/15 text-warning-foreground", destructive: "border-destructive bg-destructive/10 text-destructive" };
 
-export function ScoreCircle({ score, size = "lg" }: { score: number | null; size?: "sm" | "lg" }) {
+export function ScoreCircle({ score, size = "lg", showScore = true, phrase }: { score: number | null; size?: "sm" | "lg"; showScore?: boolean; phrase?: string | null }) {
   const tone = scoreTone(score);
+  if (!showScore) return <div className={cn("grid shrink-0 place-items-center rounded-full border-4 p-3 text-center font-bold leading-tight", toneClasses[tone], size === "lg" ? "size-28 text-lg" : "size-20 text-xs")}>{phrase || "—"}</div>;
   return <div className={cn("grid shrink-0 place-items-center rounded-full border-4 font-bold tabular-nums", toneClasses[tone], size === "lg" ? "size-28 text-4xl" : "size-14 text-lg")}>{score == null ? "—" : score.toFixed(1)}</div>;
+}
+
+export function PhraseChips({ items }: { items: Array<{ date: string | null; phrase: string | null; score: number | null }> }) {
+  return <div className="flex flex-wrap gap-2">{items.map((item, index) => <span key={`${item.date}-${index}`} className={cn("rounded-full border px-3 py-1 text-xs font-semibold", toneClasses[scoreTone(item.score)])}>{item.phrase || "—"}</span>)}</div>;
 }
 
 export function TrafficLight({ light, label }: { light: Metrics["traffic_light"]; label?: string }) {
@@ -24,9 +29,9 @@ export function TrafficLight({ light, label }: { light: Metrics["traffic_light"]
   return <span className="inline-flex items-center gap-2 text-sm font-medium"><span className={cn("size-3 rounded-full", classes)} />{label ?? light}</span>;
 }
 
-export function AreaBar({ name, earned, possible }: { name: string; earned: number; possible: number }) {
+export function AreaBar({ name, earned, possible, showScore = true }: { name: string; earned: number; possible: number; showScore?: boolean }) {
   const pct = possible > 0 ? Math.min(100, (earned / possible) * 100) : 0;
-  return <div><div className="mb-1 flex justify-between gap-3 text-sm font-semibold"><span>{name}</span><span className="tabular-nums">{earned.toFixed(1)} / {possible.toFixed(1)}</span></div><div className="h-2.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-success" style={{ width: `${pct}%` }} /></div></div>;
+  return <div><div className="mb-1 flex justify-between gap-3 text-sm font-semibold"><span>{name}</span>{showScore ? <span className="tabular-nums">{earned.toFixed(1)} / {possible.toFixed(1)}</span> : null}</div><div className="h-2.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-success" style={{ width: `${pct}%` }} /></div></div>;
 }
 
 export function ItemIcon({ result }: { result: string }) {
