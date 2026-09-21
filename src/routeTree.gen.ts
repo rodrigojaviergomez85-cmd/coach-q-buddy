@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AuthenticatedAnalizadorRouteImport } from './routes/_authenticated/analizador'
 import { Route as AuthenticatedCoachesRouteImport } from './routes/_authenticated/coaches'
 import { Route as AuthenticatedConfiguracionRouteImport } from './routes/_authenticated/configuracion'
 import { Route as AuthenticatedMonitoreosRouteImport } from './routes/_authenticated/monitoreos'
@@ -31,6 +32,11 @@ const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAnalizadorRoute = AuthenticatedAnalizadorRouteImport.update({
+  id: '/analizador',
+  path: '/analizador',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCoachesRoute = AuthenticatedCoachesRouteImport.update({
   id: '/coaches',
@@ -64,6 +70,7 @@ const AuthenticatedPlantillasTemplateIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/analizador': typeof AuthenticatedAnalizadorRoute
   '/coaches': typeof AuthenticatedCoachesRoute
   '/configuracion': typeof AuthenticatedConfiguracionRoute
   '/monitoreos': typeof AuthenticatedMonitoreosRoute
@@ -73,6 +80,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/analizador': typeof AuthenticatedAnalizadorRoute
   '/coaches': typeof AuthenticatedCoachesRoute
   '/configuracion': typeof AuthenticatedConfiguracionRoute
   '/monitoreos': typeof AuthenticatedMonitoreosRoute
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authenticated/analizador': typeof AuthenticatedAnalizadorRoute
   '/_authenticated/coaches': typeof AuthenticatedCoachesRoute
   '/_authenticated/configuracion': typeof AuthenticatedConfiguracionRoute
   '/_authenticated/monitoreos': typeof AuthenticatedMonitoreosRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/analizador'
     | '/coaches'
     | '/configuracion'
     | '/monitoreos'
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/analizador'
     | '/coaches'
     | '/configuracion'
     | '/monitoreos'
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/login'
+    | '/_authenticated/analizador'
     | '/_authenticated/coaches'
     | '/_authenticated/configuracion'
     | '/_authenticated/monitoreos'
@@ -149,6 +161,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/analizador': {
+      id: '/_authenticated/analizador'
+      path: '/analizador'
+      fullPath: '/analizador'
+      preLoaderRoute: typeof AuthenticatedAnalizadorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/coaches': {
       id: '/_authenticated/coaches'
@@ -189,6 +208,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAnalizadorRoute: typeof AuthenticatedAnalizadorRoute
   AuthenticatedCoachesRoute: typeof AuthenticatedCoachesRoute
   AuthenticatedConfiguracionRoute: typeof AuthenticatedConfiguracionRoute
   AuthenticatedMonitoreosRoute: typeof AuthenticatedMonitoreosRoute
@@ -197,6 +217,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAnalizadorRoute: AuthenticatedAnalizadorRoute,
   AuthenticatedCoachesRoute: AuthenticatedCoachesRoute,
   AuthenticatedConfiguracionRoute: AuthenticatedConfiguracionRoute,
   AuthenticatedMonitoreosRoute: AuthenticatedMonitoreosRoute,
