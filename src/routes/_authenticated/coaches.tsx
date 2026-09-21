@@ -125,7 +125,7 @@ function parseCsv(text: string): Record<string, string>[] {
 }
 
 function CoachesPage() {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const { profile, canSeeAll, isAdmin } = useProfile();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
