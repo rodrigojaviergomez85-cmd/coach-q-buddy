@@ -124,6 +124,23 @@ const dict: Dict = {
     en: "The seed is applied as a database migration (seed_templates.sql). This button checks and reloads the loaded templates.",
   },
   add_item: { es: "Agregar ítem", en: "Add item" },
+  edit_item: { es: "Editar ítem", en: "Edit item" },
+  new_item: { es: "Nuevo ítem", en: "New item" },
+  item_saved: { es: "Ítem guardado", en: "Item saved" },
+  item_deleted: { es: "Ítem eliminado", en: "Item deleted" },
+  delete_item_title: { es: "¿Eliminar este ítem?", en: "Delete this item?" },
+  delete_item_desc: {
+    es: "Esta acción no se puede deshacer.",
+    en: "This action cannot be undone.",
+  },
+  sort_order: { es: "Orden", en: "Order" },
+  item_number: { es: "Número", en: "Number" },
+  short_label: { es: "Etiqueta corta", en: "Short label" },
+  template_updated: { es: "Plantilla actualizada", en: "Template updated" },
+  kind_item: { es: "Ítem", en: "Item" },
+  kind_checklist: { es: "Checklist", en: "Checklist" },
+  kind_penalty: { es: "Penalidad", en: "Penalty" },
+  kind_bonus: { es: "Bonus", en: "Bonus" },
 
   // settings
   settings_title: { es: "Configuración", en: "Settings" },
