@@ -207,6 +207,7 @@ export type Database = {
           qa_date: string | null
           result_phrase: string | null
           schedule: string | null
+          share_token: string | null
           status: string
           syllabus: string | null
           template_id: string | null
@@ -235,6 +236,7 @@ export type Database = {
           qa_date?: string | null
           result_phrase?: string | null
           schedule?: string | null
+          share_token?: string | null
           status?: string
           syllabus?: string | null
           template_id?: string | null
@@ -263,6 +265,7 @@ export type Database = {
           qa_date?: string | null
           result_phrase?: string | null
           schedule?: string | null
+          share_token?: string | null
           status?: string
           syllabus?: string | null
           template_id?: string | null
@@ -427,6 +430,7 @@ export type Database = {
       can_write_monitoring: { Args: { _id: string }; Returns: boolean }
       current_role: { Args: never; Returns: string }
       email_is_authorized: { Args: { _email: string }; Returns: boolean }
+      get_report_by_token: { Args: { _token: string }; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
       is_senior_or_admin: { Args: never; Returns: boolean }
     }
