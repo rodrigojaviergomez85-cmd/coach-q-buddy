@@ -6,7 +6,7 @@ export async function fetchInternalReport(id: string): Promise<ReportData | null
   if (error) throw error;
   if (!m) return null;
   const [{ data: coach }, { data: template }, { data: profile }, { data: answers }, { data: students }, { data: previous }, { data: recent }, { data: configRows }] = await Promise.all([
-    supabase.from("coaches").select("full_name, lob, level").eq("id", m.coach_id ?? "").maybeSingle(),
+    supabase.from("coaches").select("full_name, lob, level, phone").eq("id", m.coach_id ?? "").maybeSingle(),
     supabase.from("templates").select("id, name, code, scoring, has_student_grid").eq("id", m.template_id ?? "").maybeSingle(),
     supabase.from("profiles").select("full_name, email").eq("id", m.coordinator_id ?? "").maybeSingle(),
     supabase.from("monitoring_answers").select("id, item_id, result, score, comment, evidence_time, item:template_items(*)").eq("monitoring_id", id),
@@ -19,7 +19,7 @@ export async function fetchInternalReport(id: string): Promise<ReportData | null
   const config = Object.fromEntries((configRows ?? []).map((row) => [row.key, Number(row.value)]));
   return {
     config: { talk_time_green: config["talk_time_green"] ?? 70, talk_time_yellow: config["talk_time_yellow"] ?? 55, student_min_pct: config["student_min_pct"] ?? 8, af_min_students: config["af_min_students"] ?? 3, coach_response_days: config["coach_response_days"] ?? 3 },
-    coach: { name: coach?.full_name ?? "Coach", lob: coach?.lob ?? null, level: coach?.level ?? null },
+    coach: { name: coach?.full_name ?? "Coach", lob: coach?.lob ?? null, level: coach?.level ?? null, phone: coach?.phone ?? null },
     template: { id: template?.id ?? "", name: template?.name ?? "Monitoreo", code: template?.code ?? "", scoring: template?.scoring ?? null, has_student_grid: template?.has_student_grid ?? false },
     coordinator: { name: profile?.full_name || profile?.email || "—" },
     monitoring: m as unknown as ReportData["monitoring"],
