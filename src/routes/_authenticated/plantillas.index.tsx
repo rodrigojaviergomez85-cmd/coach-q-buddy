@@ -32,6 +32,21 @@ export const Route = createFileRoute("/_authenticated/plantillas/")({
 
 function TemplatesPage() {
   const { t } = useI18n();
+  const { isAdmin } = useProfile();
+  const queryClient = useQueryClient();
+
+  const toggleActive = useMutation({
+    mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
+      const { error } = await supabase.from("templates").update({ active }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(t("template_updated"));
+      void queryClient.invalidateQueries({ queryKey: ["templates"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
 
   const templatesQuery = useQuery({
     queryKey: ["templates"],
