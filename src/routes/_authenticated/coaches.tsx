@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesInsert } from "@/integrations/supabase/types";
 import { useProfile } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { monthStartSV, nextMonthStartSV } from "@/lib/date";
@@ -129,6 +130,8 @@ function parseCsv(text: string): Record<string, string>[] {
       return obj;
     });
 }
+
+type ImportPayload = TablesInsert<"coaches"> & { full_name: string };
 
 function CoachesPage() {
   const { t } = useI18n();
@@ -251,8 +254,6 @@ function CoachesPage() {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["coaches"] }),
     onError: (error: Error) => toast.error(error.message),
   });
-
-  type ImportPayload = Record<string, unknown> & { full_name: string; external_id?: string | null };
 
   async function handleImport(file: File) {
     const text = (await file.text()).replace(/^\uFEFF/, "");
