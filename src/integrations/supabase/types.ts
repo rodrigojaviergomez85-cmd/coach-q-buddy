@@ -36,43 +36,64 @@ export type Database = {
         Row: {
           active: boolean
           coordinator_id: string | null
+          coordinator_name: string | null
+          country: string | null
           created_at: string
+          csat_level: string | null
           email: string | null
+          external_id: string | null
+          first_class_date: string | null
           full_name: string
           id: string
           level: string | null
           lob: string | null
           notes: string | null
+          phone: string | null
           schedule: string | null
           senior_name: string | null
+          tenure_months: number | null
           updated_at: string
         }
         Insert: {
           active?: boolean
           coordinator_id?: string | null
+          coordinator_name?: string | null
+          country?: string | null
           created_at?: string
+          csat_level?: string | null
           email?: string | null
+          external_id?: string | null
+          first_class_date?: string | null
           full_name: string
           id?: string
           level?: string | null
           lob?: string | null
           notes?: string | null
+          phone?: string | null
           schedule?: string | null
           senior_name?: string | null
+          tenure_months?: number | null
           updated_at?: string
         }
         Update: {
           active?: boolean
           coordinator_id?: string | null
+          coordinator_name?: string | null
+          country?: string | null
           created_at?: string
+          csat_level?: string | null
           email?: string | null
+          external_id?: string | null
+          first_class_date?: string | null
           full_name?: string
           id?: string
           level?: string | null
           lob?: string | null
           notes?: string | null
+          phone?: string | null
           schedule?: string | null
           senior_name?: string | null
+          tenure_months?: number | null
           updated_at?: string
         }
         Relationships: [
