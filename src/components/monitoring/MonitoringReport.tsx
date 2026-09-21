@@ -1,4 +1,5 @@
-import { CheckCircle2, Clock3, Copy, Download, ExternalLink, MessageCircle, Target, ThumbsUp } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Clock3, Copy, Download, ExternalLink, Maximize2, MessageCircle, Target, ThumbsUp, X } from "lucide-react";
 import { Line, LineChart, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ function areaScores(report: ReportData) {
 }
 
 export function MonitoringReport({ report, internal = false, shareUrl }: { report: ReportData; internal?: boolean; shareUrl?: string | undefined }) {
+  const [presenting, setPresenting] = useState(false);
   const { monitoring: m } = report;
   const transcriptConfig = report.config ?? DEFAULT_TRANSCRIPT_CONFIG;
   const kudos = normalizeTextList(m.kudos);
@@ -40,7 +42,7 @@ export function MonitoringReport({ report, internal = false, shareUrl }: { repor
   const calibration = evaluated.filter((s) => s.phrase && s.coach_phrase && s.phrase !== s.coach_phrase).length;
   const timeline = m.class_timeline as ClassTimelineData | null | undefined;
 
-  return <article className="monitoring-report mx-auto max-w-[900px] space-y-6">
+  return <><div className="no-print mx-auto mb-4 flex max-w-[900px] justify-end"><Button variant="outline" onClick={() => setPresenting(true)}><Maximize2 className="size-4" /> Presentar</Button></div><article className="monitoring-report mx-auto max-w-[900px] space-y-6">
     <header className="flex flex-col gap-5 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
       <div><p className="text-sm font-semibold text-primary">English4Kids · QA</p><h1 className="mt-1 text-3xl font-bold">{report.coach.name}</h1><p className="mt-2 text-sm text-muted-foreground">{report.template.name} · {formatDateSV(m.class_date)} · {report.coach.lob || "—"} / {m.level || report.coach.level || "—"}</p><p className="text-sm text-muted-foreground">Coordinador: {report.coordinator.name}</p></div>
       <div className="flex items-center gap-4 sm:flex-col sm:gap-1"><ScoreCircle score={m.final_score} /><div className="text-center"><p className="font-bold">{m.result_phrase || "Borrador"}</p><p className="text-sm text-muted-foreground">{m.customer_expectation}</p></div></div>
@@ -69,5 +71,39 @@ export function MonitoringReport({ report, internal = false, shareUrl }: { repor
     {m.general_comments ? <section className="rounded-lg border bg-card p-5"><h2 className="font-bold">Comentarios generales</h2><p className="mt-2 whitespace-pre-wrap text-sm">{m.general_comments}</p></section> : null}
     {m.coach_responded_at ? <section className="rounded-lg border border-primary/30 bg-primary/5 p-5"><h2 className="flex items-center gap-2 font-bold"><MessageCircle className="size-5 text-primary" />Respuesta del coach</h2><div className="mt-4 grid gap-4 md:grid-cols-2"><div><p className="text-xs font-semibold uppercase text-muted-foreground">Lo que entendí</p><p className="mt-1 whitespace-pre-wrap text-sm">{m.coach_summary}</p></div><div><p className="text-xs font-semibold uppercase text-muted-foreground">Mi compromiso</p><p className="mt-1 whitespace-pre-wrap text-sm">{m.coach_commitment}</p></div></div>{m.coach_counter ? <p className="mt-4 border-t pt-4 text-sm"><strong>Propuesta:</strong> {m.coach_counter}</p> : null}</section> : internal && m.status === "enviado" ? <section className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">Esperando la respuesta y el compromiso del coach.</section> : null}
     <footer className="flex flex-col gap-4 border-t pt-5 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between"><p>Evaluado por {report.coordinator.name} el {formatDateSV(m.qa_date)}</p>{internal ? <div className="no-print flex flex-wrap gap-2"><Button variant="outline" onClick={() => window.print()}><Download className="size-4" /> Descargar PDF</Button>{shareUrl ? <><Button variant="outline" onClick={() => void navigator.clipboard.writeText(shareUrl).then(() => toast.success("Link copiado"))}><Copy className="size-4" /> Copiar link</Button><Button variant="outline" onClick={() => void navigator.clipboard.writeText(reportShareText(report, shareUrl)).then(() => toast.success("Resumen copiado"))}><Copy className="size-4" /> Copiar resumen</Button></> : null}</div> : null}</footer>
-  </article>;
+  </article>{presenting ? <PresentationMode report={report} onClose={() => setPresenting(false)} /> : null}</>;
+}
+
+function PresentationMode({ report, onClose }: { report: ReportData; onClose: () => void }) {
+  const [slide, setSlide] = useState(0);
+  const root = useRef<HTMLDivElement>(null);
+  const { monitoring: m } = report;
+  const metrics = m.transcript_metrics;
+  const timeline = m.class_timeline as ClassTimelineData | null | undefined;
+  const kudos = normalizeTextList(m.kudos);
+  const aois = normalizeAois(m.aois);
+  const previousAois = normalizeTextList(m.previous_aois);
+  const penalties = report.answers.filter((a) => a.item.kind === "penalty" && a.result === "si");
+  const bonuses = report.answers.filter((a) => a.item.kind === "bonus" && a.result === "si");
+  const transcriptConfig = report.config ?? DEFAULT_TRANSCRIPT_CONFIG;
+  const close = () => { if (document.fullscreenElement) void document.exitFullscreen(); onClose(); };
+  useEffect(() => {
+    if (root.current?.requestFullscreen) void root.current.requestFullscreen().catch(() => undefined);
+    const keys = (event: KeyboardEvent) => {
+      if (event.key === "ArrowRight") setSlide((value) => Math.min(3, value + 1));
+      if (event.key === "ArrowLeft") setSlide((value) => Math.max(0, value - 1));
+      if (event.key === "Escape") close();
+    };
+    const fullscreen = () => { if (!document.fullscreenElement) onClose(); };
+    window.addEventListener("keydown", keys); document.addEventListener("fullscreenchange", fullscreen);
+    return () => { window.removeEventListener("keydown", keys); document.removeEventListener("fullscreenchange", fullscreen); };
+  }, []);
+  return <div ref={root} role="dialog" aria-label="Presentación del reporte" className="fixed inset-0 z-[100] flex min-h-screen flex-col bg-background text-[1.22rem] leading-relaxed text-foreground">
+    <header className="flex items-center justify-between border-b px-8 py-4"><div><p className="font-semibold text-primary">English4Kids · QA</p><h1 className="text-3xl font-bold">{report.coach.name}</h1></div><div className="flex items-center gap-5"><strong className="text-2xl tabular-nums">{slide + 1} / 4</strong><Button size="icon" variant="ghost" onClick={close} aria-label="Salir de presentación"><X className="size-7" /></Button></div></header>
+    <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6 lg:px-14">{slide === 0 ? <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[18rem_1fr]"><div className="flex flex-col items-center justify-center rounded-lg border bg-card p-8"><ScoreCircle score={m.final_score} /><p className="mt-5 text-center text-2xl font-bold">{m.result_phrase}</p><p className="text-center text-muted-foreground">{m.customer_expectation}</p></div><div className="grid gap-6"><section className="rounded-lg border border-success/30 bg-success/5 p-7"><h2 className="flex items-center gap-3 text-2xl font-bold text-success"><ThumbsUp className="size-7" /> Lo que hiciste muy bien</h2><ul className="mt-5 space-y-3">{kudos.map((item) => <li key={item}>• {item}</li>)}</ul></section><section className="rounded-lg border border-warning/40 bg-warning/5 p-7"><h2 className="flex items-center gap-3 text-2xl font-bold"><Target className="size-7 text-warning" /> En qué enfocarte</h2><ul className="mt-5 space-y-3">{aois.map((item) => <li key={item.text}>• {item.text}</li>)}</ul></section></div></div> : null}
+      {slide === 1 ? <div className="mx-auto max-w-6xl"><h2 className="mb-6 text-3xl font-bold">Rúbrica visual</h2>{penalties.length ? <div className="mb-5 rounded-lg border border-destructive bg-destructive/10 p-4 font-bold text-destructive">Auto 5: {penalties.map((item) => item.item.short_label || item.item.description).join(", ")}</div> : null}{bonuses.length ? <div className="mb-5 text-success">Bonus: {bonuses.map((item) => item.item.short_label || item.item.description).join(", ")}</div> : null}<div className="space-y-5">{areaScores(report).map(([area, score]) => <section key={area} className="rounded-lg border bg-card p-6"><AreaBar name={area} earned={score.earned} possible={score.possible} /><div className="mt-4 grid gap-2 lg:grid-cols-2">{report.answers.filter((a) => (a.item.area || a.item.section || "General") === area && ["item", "checklist"].includes(a.item.kind ?? "")).map((answer) => <div key={answer.item_id} className={cn("flex gap-3 rounded-md p-3", answer.result === "no" && "bg-destructive/10")}><ItemIcon result={answer.result} /><span>{answer.item.description}</span></div>)}</div></section>)}</div></div> : null}
+      {slide === 2 ? <div className="mx-auto max-w-6xl"><h2 className="mb-6 text-3xl font-bold">Cómo se repartió la clase</h2>{timeline ? <div className="mb-8 rounded-lg border bg-card p-6"><ClassTimeline timeline={timeline} /></div> : null}{metrics ? <div className="grid gap-8 lg:grid-cols-2"><TalkTimePie metrics={metrics} /><div><p className="text-4xl font-bold">Alumnos {metrics.students_pct}%</p><TrafficLight light={metrics.traffic_light} label={`Meta ${transcriptConfig.talk_time_green}%`} /><p className="mt-5 text-muted-foreground">Coach: {(metrics.coach_sec / 60).toFixed(1)} min · Alumnos: {(metrics.students_sec / 60).toFixed(1)} min · Silencio: {metrics.silence_min} min</p><div className="mt-7"><StudentBars metrics={metrics} minimum={transcriptConfig.student_min_pct} /></div></div><div className="lg:col-span-2"><BlocksChart blocks={metrics.blocks_10min} /></div></div> : <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">Sin análisis de talking time</div>}</div> : null}
+      {slide === 3 ? <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-2"><section><h2 className="mb-5 text-3xl font-bold">Comparación anterior</h2>{report.previous ? <div className="grid gap-4">{[["Puntaje", `${report.previous.final_score ?? "—"} → ${m.final_score ?? "—"}`], ["% alumnos", `${report.previous.students_pct ?? "—"} → ${metrics?.students_pct ?? "—"}`], ["AOIs anteriores", previousAois.join(", ") || "—"]].map(([label, value]) => <div key={label} className="rounded-lg border bg-card p-5"><p className="text-sm text-muted-foreground">{label}</p><p className="mt-1 text-2xl font-bold">{value}</p></div>)}</div> : <p className="text-muted-foreground">No hay un monitoreo anterior.</p>}</section><section><h2 className="mb-5 text-3xl font-bold">Respuesta del coach</h2>{m.coach_responded_at ? <div className="space-y-5 rounded-lg border border-primary/30 bg-primary/5 p-6"><div><p className="text-sm font-bold uppercase text-muted-foreground">Lo que entendí</p><p className="mt-2 whitespace-pre-wrap">{m.coach_summary}</p></div><div><p className="text-sm font-bold uppercase text-muted-foreground">Mi compromiso</p><p className="mt-2 whitespace-pre-wrap">{m.coach_commitment}</p></div>{m.coach_counter ? <p className="border-t pt-4"><strong>Propuesta:</strong> {m.coach_counter}</p> : null}</div> : <div className="rounded-lg border border-dashed p-8 text-muted-foreground">Respuesta pendiente.</div>}</section></div> : null}</div>
+    <footer className="flex items-center justify-end gap-4 border-t px-8 py-4"><Button size="lg" variant="outline" disabled={slide === 0} onClick={() => setSlide((value) => Math.max(0, value - 1))}><ArrowLeft className="size-5" /> Anterior</Button><Button size="lg" disabled={slide === 3} onClick={() => setSlide((value) => Math.min(3, value + 1))}>Siguiente <ArrowRight className="size-5" /></Button></footer>
+  </div>;
 }
