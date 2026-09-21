@@ -30,6 +30,7 @@ import { useProfile } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { monthStartSV, nextMonthStartSV } from "@/lib/date";
 import { cn } from "@/lib/utils";
+import { detectCsvFormat, mapTeachersListRow, normalizeName } from "@/lib/coach-import";
 
 export const Route = createFileRoute("/_authenticated/coaches")({
   head: () => ({
@@ -57,12 +58,17 @@ interface CoachRow {
   full_name: string;
   email: string | null;
   coordinator_id: string | null;
+  coordinator_name?: string | null;
   senior_name: string | null;
   lob: string | null;
   level: string | null;
   schedule: string | null;
   active: boolean;
   notes: string | null;
+  country?: string | null;
+  csat_level?: string | null;
+  tenure_months?: number | null;
+  phone?: string | null;
 }
 
 const emptyCoach: Omit<CoachRow, "id"> = {
@@ -141,7 +147,7 @@ function CoachesPage() {
       const { data, error } = await supabase
         .from("coaches")
         .select(
-          "id, full_name, email, coordinator_id, senior_name, lob, level, schedule, active, notes",
+          "id, full_name, email, coordinator_id, coordinator_name, senior_name, lob, level, schedule, active, notes, country, csat_level, tenure_months, phone, external_id",
         )
         .order("full_name");
       if (error) throw error;
@@ -247,13 +253,80 @@ function CoachesPage() {
   });
 
   async function handleImport(file: File) {
-    const text = await file.text();
+    const text = (await file.text()).replace(/^\uFEFF/, "");
     const records = parseCsv(text);
+    if (records.length === 0) {
+      setImportSummary("El archivo no tiene filas.");
+      return;
+    }
+    const format = detectCsvFormat(Object.keys(records[0] ?? {}));
+    const coaches = coachesQuery.data ?? [];
+
+    if (format === "teachers_list") {
+      const profilesByName = new Map(
+        (profilesQuery.data ?? []).map((p) => [normalizeName(p.full_name), p.id] as const),
+      );
+      const byExternal = new Map(
+        coaches.flatMap((c) =>
+          (c as CoachRow & { external_id?: string | null }).external_id
+            ? [
+                [
+                  (c as CoachRow & { external_id?: string | null }).external_id as string,
+                  c.id,
+                ] as const,
+              ]
+            : [],
+        ),
+      );
+      const byName = new Map(coaches.map((c) => [normalizeName(c.full_name), c.id] as const));
+
+      let created = 0;
+      let updated = 0;
+      const coordinators = new Set<string>();
+      const linked = new Set<string>();
+      const unlinked = new Set<string>();
+
+      for (const record of records) {
+        const row = mapTeachersListRow(record);
+        if (!row) continue;
+        const coordinatorId = row.coordinator_name
+          ? (profilesByName.get(normalizeName(row.coordinator_name)) ?? null)
+          : null;
+        if (row.coordinator_name) {
+          coordinators.add(row.coordinator_name);
+          if (coordinatorId) linked.add(row.coordinator_name);
+          else unlinked.add(row.coordinator_name);
+        }
+        const payload = { ...row, coordinator_id: coordinatorId };
+        const existingId =
+          (row.external_id ? byExternal.get(row.external_id) : undefined) ??
+          byName.get(normalizeName(row.full_name));
+        const { error } = existingId
+          ? await supabase.from("coaches").update(payload).eq("id", existingId)
+          : await supabase.from("coaches").insert(payload);
+        if (error) {
+          toast.error(`${row.full_name}: ${error.message}`);
+          continue;
+        }
+        if (existingId) updated += 1;
+        else created += 1;
+      }
+
+      const missing = [...unlinked].sort();
+      setImportSummary(
+        `${created + updated} coaches importados (${created} nuevos, ${updated} actualizados). ` +
+          `${coordinators.size} coordinadores detectados, ${linked.size} ya vinculados a un usuario, ` +
+          `${missing.length} sin usuario${missing.length ? `: ${missing.join(", ")}` : "."}`,
+      );
+      void queryClient.invalidateQueries({ queryKey: ["coaches"] });
+      return;
+    }
+
     const profilesByEmail = new Map(
       (profilesQuery.data ?? []).map((p) => [p.email.toLowerCase(), p.id] as const),
     );
     const existing = new Map(
-      (coachesQuery.data ?? []).map((c) => [c.full_name.trim().toLowerCase(), c.id] as const),
+      coaches.map((c) => [c.full_name.trim().toLowerCase(), c.id] as const),
     );
     let imported = 0;
     const missing: string[] = [];
@@ -263,8 +336,7 @@ function CoachesPage() {
       if (!fullName) continue;
       const coordEmail = (record["coordinator_email"] ?? "").toLowerCase();
       const coordinatorId = coordEmail ? (profilesByEmail.get(coordEmail) ?? null) : null;
-      if (coordEmail && !coordinatorId) missing.push(fullName);
-      if (!coordEmail) missing.push(fullName);
+      if (!coordinatorId) missing.push(fullName);
 
       const payload = {
         full_name: fullName,
