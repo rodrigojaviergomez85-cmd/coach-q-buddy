@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Copy, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -132,6 +132,16 @@ export function TranscriptAnalyzer({
     setMetrics(result);
     onMetrics?.(result, raw);
   }
+
+  // Cuando el componente se usa dentro del monitoreo, el análisis se envía solo
+  // en cuanto el transcript es válido, sin depender del botón "Analizar".
+  useEffect(() => {
+    if (!onMetrics || segments.length === 0 || roles.length === 0) return;
+    const result = computeMetrics(segments, roles, config);
+    setMetrics(result);
+    onMetrics(result, raw);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [segments, roles, config]);
 
   const students = metrics?.speakers.filter((s) => s.role === "alumno") ?? [];
   const coaches = metrics?.speakers.filter((s) => s.role === "coach") ?? [];
