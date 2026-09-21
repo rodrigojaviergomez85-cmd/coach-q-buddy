@@ -31,10 +31,10 @@ const dict: Dict = {
   email: { es: "Correo", en: "Email" },
   send_code: { es: "Enviar código", en: "Send code" },
   sending: { es: "Enviando…", en: "Sending…" },
-  code_label: { es: "Código de 6 dígitos", en: "6-digit code" },
+  code_label: { es: "Código de 6 dígitos (opcional)", en: "6-digit code (optional)" },
   code_sent: {
-    es: "Te enviamos un código a tu correo. Revisa también tu spam.",
-    en: "We sent a code to your email. Check your spam folder too.",
+    es: "Te enviamos un correo. Haz clic en el enlace de acceso para entrar (revisa también tu spam). Si tu correo incluye un código de 6 dígitos, también puedes escribirlo aquí.",
+    en: "We sent you an email. Click the sign-in link to enter (check spam too). If your email includes a 6-digit code, you can type it here instead.",
   },
   enter: { es: "Entrar", en: "Enter" },
   verifying: { es: "Verificando…", en: "Verifying…" },
