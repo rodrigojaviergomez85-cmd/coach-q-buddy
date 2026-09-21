@@ -1,4 +1,5 @@
 import type { Metrics } from "./transcript";
+import type { ItemKind } from "./scoring";
 
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue | undefined };
 
@@ -6,7 +7,8 @@ export type AnswerValue = "" | "si" | "no" | "na";
 
 export interface MonitoringItem {
   id: string;
-  kind: string | null;
+  template_id: string | null;
+  kind: ItemKind | null;
   section: string | null;
   area: string | null;
   item_number: string | null;
