@@ -99,6 +99,7 @@ export function reportShareText(report: ReportData, url: string): string {
 }
 
 export interface ReportData {
+  config?: { talk_time_green: number; talk_time_yellow: number; student_min_pct: number };
   coach: { name: string; lob?: string | null; level?: string | null };
   template: { id?: string; name: string; code: string; scoring?: string | null; has_student_grid?: boolean };
   coordinator: { name: string };
