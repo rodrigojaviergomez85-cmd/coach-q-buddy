@@ -15,7 +15,9 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedAnalizadorRouteImport } from './routes/_authenticated/analizador'
 import { Route as AuthenticatedCoachesRouteImport } from './routes/_authenticated/coaches'
 import { Route as AuthenticatedConfiguracionRouteImport } from './routes/_authenticated/configuracion'
+import { Route as AuthenticatedMesRouteImport } from './routes/_authenticated/mes'
 import { Route as RTokenRouteImport } from './routes/r.$token'
+import { Route as AuthenticatedCoachesCoachIdRouteImport } from './routes/_authenticated/coaches.$coachId'
 import { Route as AuthenticatedMonitoreosIndexRouteImport } from './routes/_authenticated/monitoreos.index'
 import { Route as AuthenticatedMonitoreosIdRouteImport } from './routes/_authenticated/monitoreos.$id'
 import { Route as AuthenticatedMonitoreosNuevoRouteImport } from './routes/_authenticated/monitoreos.nuevo'
@@ -53,11 +55,22 @@ const AuthenticatedConfiguracionRoute =
     path: '/configuracion',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMesRoute = AuthenticatedMesRouteImport.update({
+  id: '/mes',
+  path: '/mes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const RTokenRoute = RTokenRouteImport.update({
   id: '/r/$token',
   path: '/r/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedCoachesCoachIdRoute =
+  AuthenticatedCoachesCoachIdRouteImport.update({
+    id: '/$coachId',
+    path: '/$coachId',
+    getParentRoute: () => AuthenticatedCoachesRoute,
+  } as any)
 const AuthenticatedMonitoreosIndexRoute =
   AuthenticatedMonitoreosIndexRouteImport.update({
     id: '/monitoreos/',
@@ -99,9 +112,11 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/analizador': typeof AuthenticatedAnalizadorRoute
-  '/coaches': typeof AuthenticatedCoachesRoute
+  '/coaches': typeof AuthenticatedCoachesRouteWithChildren
   '/configuracion': typeof AuthenticatedConfiguracionRoute
+  '/mes': typeof AuthenticatedMesRoute
   '/r/$token': typeof RTokenRoute
+  '/coaches/$coachId': typeof AuthenticatedCoachesCoachIdRoute
   '/monitoreos/$id': typeof AuthenticatedMonitoreosIdRouteWithChildren
   '/monitoreos/nuevo': typeof AuthenticatedMonitoreosNuevoRoute
   '/plantillas/$templateId': typeof AuthenticatedPlantillasTemplateIdRoute
@@ -113,9 +128,11 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/analizador': typeof AuthenticatedAnalizadorRoute
-  '/coaches': typeof AuthenticatedCoachesRoute
+  '/coaches': typeof AuthenticatedCoachesRouteWithChildren
   '/configuracion': typeof AuthenticatedConfiguracionRoute
+  '/mes': typeof AuthenticatedMesRoute
   '/r/$token': typeof RTokenRoute
+  '/coaches/$coachId': typeof AuthenticatedCoachesCoachIdRoute
   '/monitoreos/$id': typeof AuthenticatedMonitoreosIdRouteWithChildren
   '/monitoreos/nuevo': typeof AuthenticatedMonitoreosNuevoRoute
   '/plantillas/$templateId': typeof AuthenticatedPlantillasTemplateIdRoute
@@ -129,9 +146,11 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/analizador': typeof AuthenticatedAnalizadorRoute
-  '/_authenticated/coaches': typeof AuthenticatedCoachesRoute
+  '/_authenticated/coaches': typeof AuthenticatedCoachesRouteWithChildren
   '/_authenticated/configuracion': typeof AuthenticatedConfiguracionRoute
+  '/_authenticated/mes': typeof AuthenticatedMesRoute
   '/r/$token': typeof RTokenRoute
+  '/_authenticated/coaches/$coachId': typeof AuthenticatedCoachesCoachIdRoute
   '/_authenticated/monitoreos/$id': typeof AuthenticatedMonitoreosIdRouteWithChildren
   '/_authenticated/monitoreos/nuevo': typeof AuthenticatedMonitoreosNuevoRoute
   '/_authenticated/plantillas/$templateId': typeof AuthenticatedPlantillasTemplateIdRoute
@@ -147,7 +166,9 @@ export interface FileRouteTypes {
     | '/analizador'
     | '/coaches'
     | '/configuracion'
+    | '/mes'
     | '/r/$token'
+    | '/coaches/$coachId'
     | '/monitoreos/$id'
     | '/monitoreos/nuevo'
     | '/plantillas/$templateId'
@@ -161,7 +182,9 @@ export interface FileRouteTypes {
     | '/analizador'
     | '/coaches'
     | '/configuracion'
+    | '/mes'
     | '/r/$token'
+    | '/coaches/$coachId'
     | '/monitoreos/$id'
     | '/monitoreos/nuevo'
     | '/plantillas/$templateId'
@@ -176,7 +199,9 @@ export interface FileRouteTypes {
     | '/_authenticated/analizador'
     | '/_authenticated/coaches'
     | '/_authenticated/configuracion'
+    | '/_authenticated/mes'
     | '/r/$token'
+    | '/_authenticated/coaches/$coachId'
     | '/_authenticated/monitoreos/$id'
     | '/_authenticated/monitoreos/nuevo'
     | '/_authenticated/plantillas/$templateId'
@@ -236,12 +261,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConfiguracionRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/mes': {
+      id: '/_authenticated/mes'
+      path: '/mes'
+      fullPath: '/mes'
+      preLoaderRoute: typeof AuthenticatedMesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/r/$token': {
       id: '/r/$token'
       path: '/r/$token'
       fullPath: '/r/$token'
       preLoaderRoute: typeof RTokenRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/coaches/$coachId': {
+      id: '/_authenticated/coaches/$coachId'
+      path: '/$coachId'
+      fullPath: '/coaches/$coachId'
+      preLoaderRoute: typeof AuthenticatedCoachesCoachIdRouteImport
+      parentRoute: typeof AuthenticatedCoachesRoute
     }
     '/_authenticated/monitoreos/': {
       id: '/_authenticated/monitoreos/'
@@ -288,6 +327,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedCoachesRouteChildren {
+  AuthenticatedCoachesCoachIdRoute: typeof AuthenticatedCoachesCoachIdRoute
+}
+
+const AuthenticatedCoachesRouteChildren: AuthenticatedCoachesRouteChildren = {
+  AuthenticatedCoachesCoachIdRoute: AuthenticatedCoachesCoachIdRoute,
+}
+
+const AuthenticatedCoachesRouteWithChildren =
+  AuthenticatedCoachesRoute._addFileChildren(AuthenticatedCoachesRouteChildren)
+
 interface AuthenticatedMonitoreosIdRouteChildren {
   AuthenticatedMonitoreosIdEditarRoute: typeof AuthenticatedMonitoreosIdEditarRoute
 }
@@ -304,8 +354,9 @@ const AuthenticatedMonitoreosIdRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalizadorRoute: typeof AuthenticatedAnalizadorRoute
-  AuthenticatedCoachesRoute: typeof AuthenticatedCoachesRoute
+  AuthenticatedCoachesRoute: typeof AuthenticatedCoachesRouteWithChildren
   AuthenticatedConfiguracionRoute: typeof AuthenticatedConfiguracionRoute
+  AuthenticatedMesRoute: typeof AuthenticatedMesRoute
   AuthenticatedMonitoreosIdRoute: typeof AuthenticatedMonitoreosIdRouteWithChildren
   AuthenticatedMonitoreosNuevoRoute: typeof AuthenticatedMonitoreosNuevoRoute
   AuthenticatedPlantillasTemplateIdRoute: typeof AuthenticatedPlantillasTemplateIdRoute
@@ -315,8 +366,9 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalizadorRoute: AuthenticatedAnalizadorRoute,
-  AuthenticatedCoachesRoute: AuthenticatedCoachesRoute,
+  AuthenticatedCoachesRoute: AuthenticatedCoachesRouteWithChildren,
   AuthenticatedConfiguracionRoute: AuthenticatedConfiguracionRoute,
+  AuthenticatedMesRoute: AuthenticatedMesRoute,
   AuthenticatedMonitoreosIdRoute: AuthenticatedMonitoreosIdRouteWithChildren,
   AuthenticatedMonitoreosNuevoRoute: AuthenticatedMonitoreosNuevoRoute,
   AuthenticatedPlantillasTemplateIdRoute:

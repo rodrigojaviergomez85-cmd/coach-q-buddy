@@ -37,7 +37,7 @@ export const Route = createFileRoute("/_authenticated/configuracion")({
   component: SettingsPage,
 });
 
-const numericKeys = ["monthly_target", "penalty_cap", "bonus_max", "green_min", "yellow_min"];
+const numericKeys = ["monthly_target", "penalty_cap", "bonus_max", "green_min", "yellow_min", "talk_time_green", "talk_time_yellow", "student_min_pct", "af_min_students", "coach_response_days"];
 
 function SettingsPage() {
   const { t } = useI18n();

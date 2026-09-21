@@ -3,6 +3,7 @@ import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis
 import { QA_COLORS } from "@/lib/colors";
 import { cn } from "@/lib/utils";
 import type { BlockMetric, Metrics } from "@/lib/transcript";
+import type { ClassTimelineData } from "@/lib/monitoring";
 
 export function scoreTone(score: number | null | undefined) {
   if ((score ?? 0) >= 9) return "success";
@@ -47,4 +48,12 @@ export function StudentBars({ metrics, minimum }: { metrics: Metrics; minimum: n
 export function BlocksChart({ blocks }: { blocks: BlockMetric[] }) {
   const data = blocks.map((b) => ({ name: `${(b.block - 1) * 10}–${b.block * 10}`, Coach: b.coach_pct, Alumnos: b.students_pct }));
   return <div className="h-64"><ResponsiveContainer width="100%" height="100%"><BarChart layout="vertical" data={data} margin={{ left: 0, right: 10 }}><XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} fontSize={11} /><YAxis type="category" dataKey="name" width={54} fontSize={11} /><Tooltip formatter={(value) => `${value} %`} /><Bar dataKey="Coach" stackId="a" fill={QA_COLORS.coach} /><Bar dataKey="Alumnos" stackId="a" fill={QA_COLORS.students} /></BarChart></ResponsiveContainer></div>;
+}
+
+const phaseNames = { inicio: "Inicio", contenido: "Contenido", break: "Break", af: "AF", cierre: "Cierre" };
+const phaseClasses = { inicio: "bg-primary", contenido: "bg-success", break: "bg-warning", af: "bg-secondary", cierre: "bg-destructive" };
+
+export function ClassTimeline({ timeline }: { timeline: ClassTimelineData }) {
+  if (!timeline.phases.length || timeline.duration <= 0) return null;
+  return <section className="space-y-3"><div className="flex h-12 overflow-hidden rounded-md border bg-muted">{timeline.phases.map((phase) => <div key={`${phase.kind}-${phase.start}`} className={cn("grid min-w-12 place-items-center px-2 text-xs font-semibold text-primary-foreground", phaseClasses[phase.kind])} style={{ width: `${((phase.end - phase.start) / timeline.duration) * 100}%` }} title={`${phaseNames[phase.kind]} · ${Math.round(phase.start / 60)}–${Math.round(phase.end / 60)} min`}>{phaseNames[phase.kind]}</div>)}</div><div className="flex justify-between text-xs text-muted-foreground"><span>0 min</span><span>{Math.round(timeline.duration / 60)} min</span></div>{timeline.af_students.length ? <p className="text-sm"><strong>Alumnos que hablaron en AF:</strong> {timeline.af_students.join(", ")}</p> : null}</section>;
 }

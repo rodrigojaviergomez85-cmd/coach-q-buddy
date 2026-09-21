@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   ClipboardList,
   BarChart3,
+  CalendarDays,
   GraduationCap,
   LogOut,
   Menu,
@@ -26,7 +27,8 @@ export function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const nav = [
-    { to: "/coaches", label: t("nav_coaches"), icon: Users },
+    { to: "/mes", label: "Mes", icon: CalendarDays },
+    { to: "/coaches", label: "Mis coaches", icon: Users },
     { to: "/monitoreos", label: t("nav_monitorings"), icon: ClipboardList },
     { to: "/analizador", label: "Analizador", icon: BarChart3 },
     { to: "/plantillas", label: t("nav_templates"), icon: GraduationCap },
