@@ -247,6 +247,116 @@ function SettingsPage() {
           </table>
         </div>
       </section>
+
+      <PendingPeople />
+    </>
+  );
+}
+
+function PendingPeople() {
+  const queryClient = useQueryClient();
+  const [emails, setEmails] = useState<Record<string, string>>({});
+
+  const coachesQuery = useQuery({
+    queryKey: ["coaches-people"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("coaches")
+        .select("coordinator_id, coordinator_name, senior_name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const rows = coachesQuery.data ?? [];
+  const pendingCoordinators = [
+    ...new Set(
+      rows
+        .filter((r) => !r.coordinator_id && r.coordinator_name)
+        .map((r) => r.coordinator_name as string),
+    ),
+  ].sort();
+  const seniors = [
+    ...new Set(rows.flatMap((r) => (r.senior_name ? [r.senior_name] : []))),
+  ].sort();
+
+  const createUser = useMutation({
+    mutationFn: async ({
+      name,
+      role,
+      link,
+    }: {
+      name: string;
+      role: "coordinador" | "senior";
+      link: boolean;
+    }) => {
+      const email = (emails[`${role}:${name}`] ?? "").trim().toLowerCase();
+      if (!email) throw new Error("Escribe un correo");
+      const { data, error } = await supabase
+        .from("profiles")
+        .insert({ email, full_name: name, role })
+        .select("id")
+        .single();
+      if (error) throw error;
+      if (link && data) {
+        const { error: linkError } = await supabase
+          .from("coaches")
+          .update({ coordinator_id: data.id })
+          .eq("coordinator_name", name);
+        if (linkError) throw linkError;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Usuario creado");
+      void queryClient.invalidateQueries({ queryKey: ["coaches-people"] });
+      void queryClient.invalidateQueries({ queryKey: ["profiles"] });
+      void queryClient.invalidateQueries({ queryKey: ["coaches"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  function personRow(name: string, role: "coordinador" | "senior", link: boolean) {
+    const key = `${role}:${name}`;
+    return (
+      <div key={key} className="grid gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-center">
+        <span className="text-sm font-medium">{name}</span>
+        <Input
+          placeholder="correo@english4kids.com"
+          value={emails[key] ?? ""}
+          onChange={(e) => setEmails((prev) => ({ ...prev, [key]: e.target.value }))}
+        />
+        <Button
+          variant="outline"
+          disabled={createUser.isPending || !(emails[key] ?? "").trim()}
+          onClick={() => createUser.mutate({ name, role, link })}
+        >
+          {link ? "Crear usuario y vincular" : "Crear usuario"}
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <section className="mt-8 rounded-xl border bg-card p-5 shadow-panel">
+        <h2 className="mb-4 text-sm font-semibold">Coordinadores sin usuario</h2>
+        {pendingCoordinators.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Todos los coordinadores tienen usuario.</p>
+        ) : (
+          <div className="space-y-3">
+            {pendingCoordinators.map((name) => personRow(name, "coordinador", true))}
+          </div>
+        )}
+      </section>
+
+      <section className="mt-6 rounded-xl border bg-card p-5 shadow-panel">
+        <h2 className="mb-4 text-sm font-semibold">Seniors</h2>
+        {seniors.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Sin seniors registrados.</p>
+        ) : (
+          <div className="space-y-3">{seniors.map((name) => personRow(name, "senior", false))}</div>
+        )}
+      </section>
     </>
   );
 }
