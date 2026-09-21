@@ -141,7 +141,7 @@ export function reportShareText(report: ReportData, url: string): string {
 
 export interface ReportData {
   config?: { talk_time_green: number; talk_time_yellow: number; student_min_pct: number; af_min_students?: number; coach_response_days?: number };
-  coach: { name: string; lob?: string | null; level?: string | null };
+  coach: { name: string; lob?: string | null; level?: string | null; phone?: string | null };
   template: { id?: string; name: string; code: string; scoring?: string | null; has_student_grid?: boolean };
   coordinator: { name: string };
   monitoring: {
