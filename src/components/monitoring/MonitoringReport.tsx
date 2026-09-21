@@ -4,7 +4,7 @@ import { Line, LineChart, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { formatDateSV } from "@/lib/date";
-import { normalizeAois, normalizeTextList, reportShareText, secondsToMarker, zoomMarkerUrl, type ClassTimelineData, type ReportData } from "@/lib/monitoring";
+import { kudosAoisHtml, normalizeAois, normalizeTextList, reportShareText, secondsToMarker, zoomMarkerUrl, type ClassTimelineData, type ReportData } from "@/lib/monitoring";
 import { quickRead, type TranscriptConfig } from "@/lib/transcript";
 import { cn } from "@/lib/utils";
 import { AreaBar, BlocksChart, ClassTimeline, ItemIcon, PhraseChips, ScoreCircle, StudentBars, TalkTimePie, TrafficLight } from "./ReportVisuals";
@@ -44,6 +44,23 @@ export function MonitoringReport({ report, internal = false, shareUrl }: { repor
   const calibration = evaluated.filter((s) => s.phrase && s.coach_phrase && s.phrase !== s.coach_phrase).length;
   const timeline = m.class_timeline as ClassTimelineData | null | undefined;
 
+  async function copyKudosAois() {
+    const { html, text } = kudosAoisHtml(kudos, aois);
+    try {
+      if (typeof ClipboardItem !== "undefined") {
+        await navigator.clipboard.write([new ClipboardItem({
+          "text/html": new Blob([html], { type: "text/html" }),
+          "text/plain": new Blob([text], { type: "text/plain" }),
+        })]);
+      } else {
+        await navigator.clipboard.writeText(text);
+      }
+      toast.success("Kudos y AOIs copiados");
+    } catch {
+      toast.error("No se pudo copiar");
+    }
+  }
+
   return <><div className="no-print mx-auto mb-4 flex max-w-[900px] justify-end"><Button variant="outline" onClick={() => setPresenting(true)}><Maximize2 className="size-4" /> Presentar</Button></div><article className="monitoring-report mx-auto max-w-[900px] space-y-6">
     <header className="flex flex-col gap-5 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
       <div><p className="text-sm font-semibold text-primary">English4Kids · QA</p><h1 className="mt-1 text-3xl font-bold">{report.coach.name}</h1><p className="mt-2 text-sm text-muted-foreground">{report.template.name} · {formatDateSV(m.class_date)} · {report.coach.lob || "—"} / {m.level || report.coach.level || "—"}</p><p className="text-sm text-muted-foreground">Coordinador: {report.coordinator.name}</p></div>
@@ -72,7 +89,7 @@ export function MonitoringReport({ report, internal = false, shareUrl }: { repor
 
     {m.general_comments ? <section className="rounded-lg border bg-card p-5"><h2 className="font-bold">Comentarios generales</h2><p className="mt-2 whitespace-pre-wrap text-sm">{m.general_comments}</p></section> : null}
     {m.coach_responded_at ? <section className="rounded-lg border border-primary/30 bg-primary/5 p-5"><h2 className="flex items-center gap-2 font-bold"><MessageCircle className="size-5 text-primary" />Respuesta del coach</h2><div className="mt-4 grid gap-4 md:grid-cols-2"><div><p className="text-xs font-semibold uppercase text-muted-foreground">Lo que entendí</p><p className="mt-1 whitespace-pre-wrap text-sm">{m.coach_summary}</p></div><div><p className="text-xs font-semibold uppercase text-muted-foreground">Mi compromiso</p><p className="mt-1 whitespace-pre-wrap text-sm">{m.coach_commitment}</p></div></div>{m.coach_counter ? <p className="mt-4 border-t pt-4 text-sm"><strong>Propuesta:</strong> {m.coach_counter}</p> : null}</section> : internal && m.status === "enviado" ? <section className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">Esperando la respuesta y el compromiso del coach.</section> : null}
-    <footer className="flex flex-col gap-4 border-t pt-5 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between"><p>Evaluado por {report.coordinator.name} el {formatDateSV(m.qa_date)}</p>{internal ? <div className="no-print flex flex-wrap gap-2"><Button variant="outline" onClick={() => window.print()}><Download className="size-4" /> Descargar PDF</Button>{shareUrl ? <><Button variant="outline" onClick={() => void navigator.clipboard.writeText(shareUrl).then(() => toast.success("Link copiado"))}><Copy className="size-4" /> Copiar link</Button><Button variant="outline" onClick={() => void navigator.clipboard.writeText(reportShareText(report, shareUrl, coachSeesScore)).then(() => toast.success("Resumen copiado"))}><Copy className="size-4" /> Copiar resumen</Button>{report.coach.phone ? <Button variant="outline" onClick={() => window.open(`https://wa.me/${report.coach.phone!.replace(/\D/g, "")}?text=${encodeURIComponent(reportShareText(report, shareUrl, coachSeesScore))}`, "_blank", "noopener")}><MessageCircle className="size-4" /> Enviar por WhatsApp</Button> : null}</> : null}</div> : null}</footer>
+    <footer className="flex flex-col gap-4 border-t pt-5 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between"><p>Evaluado por {report.coordinator.name} el {formatDateSV(m.qa_date)}</p>{internal ? <div className="no-print flex flex-wrap gap-2"><Button variant="outline" onClick={() => window.print()}><Download className="size-4" /> Descargar PDF</Button>{m.status === "enviado" ? <Button variant="outline" onClick={() => void copyKudosAois()}><Copy className="size-4" /> Copiar Kudos y AOIs</Button> : null}{shareUrl ? <><Button variant="outline" onClick={() => void navigator.clipboard.writeText(shareUrl).then(() => toast.success("Link copiado"))}><Copy className="size-4" /> Copiar link</Button><Button variant="outline" onClick={() => void navigator.clipboard.writeText(reportShareText(report, shareUrl, coachSeesScore)).then(() => toast.success("Resumen copiado"))}><Copy className="size-4" /> Copiar resumen</Button>{report.coach.phone ? <Button variant="outline" onClick={() => window.open(`https://wa.me/${report.coach.phone!.replace(/\D/g, "")}?text=${encodeURIComponent(reportShareText(report, shareUrl, coachSeesScore))}`, "_blank", "noopener")}><MessageCircle className="size-4" /> Enviar por WhatsApp</Button> : null}</> : null}</div> : null}</footer>
   </article>{presenting ? <PresentationMode report={report} showScore={coachSeesScore} onClose={() => setPresenting(false)} /> : null}</>;
 }
 
