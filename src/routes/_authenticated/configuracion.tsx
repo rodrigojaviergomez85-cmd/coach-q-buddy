@@ -37,6 +37,7 @@ export const Route = createFileRoute("/_authenticated/configuracion")({
   component: SettingsPage,
 });
 
+const booleanKeys = ["coach_sees_score"];
 const numericKeys = ["monthly_target", "penalty_cap", "bonus_max", "green_min", "yellow_min", "talk_time_green", "talk_time_yellow", "student_min_pct", "af_min_students", "coach_response_days"];
 
 function SettingsPage() {
@@ -82,7 +83,7 @@ function SettingsPage() {
   const saveConfig = useMutation({
     mutationFn: async () => {
       for (const [key, raw] of Object.entries(values)) {
-        const value = numericKeys.includes(key) ? Number(raw) : raw;
+        const value = booleanKeys.includes(key) ? raw === "true" : numericKeys.includes(key) ? Number(raw) : raw;
         const { error } = await supabase.from("app_config").update({ value }).eq("key", key);
         if (error) throw error;
       }
@@ -145,12 +146,22 @@ function SettingsPage() {
           {(configQuery.data ?? []).map((row) => (
             <div key={row.key} className="space-y-2">
               <Label htmlFor={row.key}>{row.description || row.key}</Label>
-              <Input
-                id={row.key}
-                value={values[row.key] ?? ""}
-                inputMode={numericKeys.includes(row.key) ? "decimal" : "text"}
-                onChange={(e) => setValues((v) => ({ ...v, [row.key]: e.target.value }))}
-              />
+              {booleanKeys.includes(row.key) ? (
+                <div className="flex h-10 items-center">
+                  <Switch
+                    id={row.key}
+                    checked={values[row.key] === "true"}
+                    onCheckedChange={(checked) => setValues((v) => ({ ...v, [row.key]: checked ? "true" : "false" }))}
+                  />
+                </div>
+              ) : (
+                <Input
+                  id={row.key}
+                  value={values[row.key] ?? ""}
+                  inputMode={numericKeys.includes(row.key) ? "decimal" : "text"}
+                  onChange={(e) => setValues((v) => ({ ...v, [row.key]: e.target.value }))}
+                />
+              )}
             </div>
           ))}
         </div>

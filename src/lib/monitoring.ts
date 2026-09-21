@@ -124,14 +124,14 @@ export function resolvedAois(previous: JsonValue | undefined, currentAois: AoiEn
   return previousTexts.filter((text) => resolvedTexts.has(text)).length;
 }
 
-export function reportShareText(report: ReportData, url: string): string {
+export function reportShareText(report: ReportData, url: string, showScore = true): string {
   const m = report.monitoring;
   const kudos = normalizeTextList(m.kudos)[0] ?? "—";
   const aoi = m.main_aoi || normalizeAois(m.aois)[0]?.text || "—";
   const metrics = m.transcript_metrics;
   return [
     `QA · ${report.coach.name}`,
-    `Puntaje: ${m.final_score ?? "—"} · ${m.result_phrase ?? ""}`,
+    showScore ? `Puntaje: ${m.final_score ?? "—"} · ${m.result_phrase ?? ""}` : `Resultado: ${m.result_phrase ?? "—"}`,
     `Kudo: ${kudos}`,
     `AOI: ${aoi}`,
     metrics ? `Alumnos: ${metrics.students_pct} % (${metrics.traffic_light})` : "Talking time: sin análisis",
@@ -140,7 +140,7 @@ export function reportShareText(report: ReportData, url: string): string {
 }
 
 export interface ReportData {
-  config?: { talk_time_green: number; talk_time_yellow: number; student_min_pct: number; af_min_students?: number; coach_response_days?: number };
+  config?: { talk_time_green: number; talk_time_yellow: number; student_min_pct: number; af_min_students?: number; coach_response_days?: number; coach_sees_score?: boolean };
   coach: { name: string; lob?: string | null; level?: string | null; phone?: string | null };
   template: { id?: string; name: string; code: string; scoring?: string | null; has_student_grid?: boolean };
   coordinator: { name: string };
@@ -157,6 +157,6 @@ export interface ReportData {
   };
   answers: Array<MonitoringAnswer & { id?: string; item: MonitoringItem }>;
   students: Array<{ student_number: number | null; student_name: string | null; gr: number | null; pr: number | null; fl: number | null; co: number | null; in: number | null; score: number | null; phrase: string | null; goal: boolean | null; coach_phrase: string | null; comment: string | null }>;
-  previous: { id?: string; date: string | null; final_score: number | null; students_pct: number | null; aois?: JsonValue; main_aoi?: string | null; coach_commitment?: string | null } | null;
-  recent_scores: Array<{ date: string | null; score: number }>;
+  previous: { id?: string; date: string | null; final_score: number | null; result_phrase?: string | null; students_pct: number | null; aois?: JsonValue; main_aoi?: string | null; coach_commitment?: string | null } | null;
+  recent_scores: Array<{ date: string | null; score: number; phrase?: string | null }>;
 }
