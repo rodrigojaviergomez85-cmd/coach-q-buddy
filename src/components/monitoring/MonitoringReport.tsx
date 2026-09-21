@@ -25,7 +25,7 @@ function areaScores(report: ReportData) {
   return Array.from(map.entries());
 }
 
-export function MonitoringReport({ report, internal = false, shareUrl }: { report: ReportData; internal?: boolean; shareUrl?: string }) {
+export function MonitoringReport({ report, internal = false, shareUrl }: { report: ReportData; internal?: boolean; shareUrl?: string | undefined }) {
   const { monitoring: m } = report;
   const kudos = normalizeTextList(m.kudos);
   const aois = normalizeAois(m.aois);
