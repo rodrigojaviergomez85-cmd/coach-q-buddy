@@ -252,39 +252,121 @@ function CoachesPage() {
     onError: (error: Error) => toast.error(error.message),
   });
 
+  type ImportPayload = Record<string, unknown> & { full_name: string; external_id?: string | null };
+
   async function handleImport(file: File) {
     const text = (await file.text()).replace(/^\uFEFF/, "");
     const records = parseCsv(text);
     if (records.length === 0) {
       setImportSummary("El archivo no tiene filas.");
+      setImportOpen(true);
       return;
     }
     const format = detectCsvFormat(Object.keys(records[0] ?? {}));
-    const coaches = coachesQuery.data ?? [];
+
+    const { data: freshCoaches, error: freshError } = await supabase
+      .from("coaches")
+      .select("id, full_name, external_id");
+    if (freshError) {
+      setImportSummary(`No se pudo leer la lista de coaches: ${freshError.message}`);
+      setImportOpen(true);
+      return;
+    }
+    const byExternal = new Map<string, string>();
+    const byName = new Map<string, string>();
+    for (const coach of freshCoaches ?? []) {
+      if (coach.external_id) byExternal.set(coach.external_id, coach.id);
+      byName.set(normalizeName(coach.full_name), coach.id);
+    }
+
+    let created = 0;
+    let updated = 0;
+    let failed = 0;
+    const remember = (id: string, fullName: string, externalId?: string | null) => {
+      byName.set(normalizeName(fullName), id);
+      if (externalId) byExternal.set(externalId, id);
+    };
+
+    async function saveRow(payload: ImportPayload) {
+      const existingId =
+        (payload.external_id ? byExternal.get(payload.external_id) : undefined) ??
+        byName.get(normalizeName(payload.full_name));
+      if (existingId) {
+        const { error } = await supabase.from("coaches").update(payload).eq("id", existingId);
+        if (error) {
+          failed += 1;
+          return;
+        }
+        remember(existingId, payload.full_name, payload.external_id ?? null);
+        updated += 1;
+        return;
+      }
+      const { data, error } = await supabase.from("coaches").insert(payload).select("id").single();
+      if (!error && data) {
+        remember(data.id, payload.full_name, payload.external_id ?? null);
+        created += 1;
+        return;
+      }
+      if (error && (error as { code?: string }).code === "23505") {
+        const { data: found } = await supabase
+          .from("coaches")
+          .select("id")
+          .ilike("full_name", payload.full_name)
+          .limit(1)
+          .maybeSingle();
+        if (found) {
+          const { error: updateError } = await supabase
+            .from("coaches")
+            .update(payload)
+            .eq("id", found.id);
+          if (!updateError) {
+            remember(found.id, payload.full_name, payload.external_id ?? null);
+            updated += 1;
+            return;
+          }
+        }
+      }
+      failed += 1;
+    }
+
+    async function saveBatch(batch: ImportPayload[]) {
+      const withExternal = batch.filter((row) => row.external_id);
+      const rest = batch.filter((row) => !row.external_id);
+      if (withExternal.length) {
+        const { data, error } = await supabase
+          .from("coaches")
+          .upsert(withExternal, { onConflict: "external_id" })
+          .select("id, full_name, external_id");
+        if (error) {
+          for (const row of withExternal) await saveRow(row);
+        } else {
+          for (const row of withExternal) {
+            const existed =
+              byExternal.has(row.external_id as string) ||
+              byName.has(normalizeName(row.full_name));
+            if (existed) updated += 1;
+            else created += 1;
+          }
+          for (const row of data ?? []) remember(row.id, row.full_name, row.external_id);
+        }
+      }
+      for (const row of rest) await saveRow(row);
+    }
+
+    async function runBatches(payloads: ImportPayload[]) {
+      for (let i = 0; i < payloads.length; i += 50) {
+        await saveBatch(payloads.slice(i, i + 50));
+      }
+    }
 
     if (format === "teachers_list") {
       const profilesByName = new Map(
         (profilesQuery.data ?? []).map((p) => [normalizeName(p.full_name), p.id] as const),
       );
-      const byExternal = new Map(
-        coaches.flatMap((c) =>
-          (c as CoachRow & { external_id?: string | null }).external_id
-            ? [
-                [
-                  (c as CoachRow & { external_id?: string | null }).external_id as string,
-                  c.id,
-                ] as const,
-              ]
-            : [],
-        ),
-      );
-      const byName = new Map(coaches.map((c) => [normalizeName(c.full_name), c.id] as const));
-
-      let created = 0;
-      let updated = 0;
       const coordinators = new Set<string>();
       const linked = new Set<string>();
       const unlinked = new Set<string>();
+      const payloads: ImportPayload[] = [];
 
       for (const record of records) {
         const row = mapTeachersListRow(record);
@@ -297,39 +379,27 @@ function CoachesPage() {
           if (coordinatorId) linked.add(row.coordinator_name);
           else unlinked.add(row.coordinator_name);
         }
-        const payload = { ...row, coordinator_id: coordinatorId };
-        const existingId =
-          (row.external_id ? byExternal.get(row.external_id) : undefined) ??
-          byName.get(normalizeName(row.full_name));
-        const { error } = existingId
-          ? await supabase.from("coaches").update(payload).eq("id", existingId)
-          : await supabase.from("coaches").insert(payload);
-        if (error) {
-          toast.error(`${row.full_name}: ${error.message}`);
-          continue;
-        }
-        if (existingId) updated += 1;
-        else created += 1;
+        payloads.push({ ...row, coordinator_id: coordinatorId });
       }
+
+      await runBatches(payloads);
 
       const missing = [...unlinked].sort();
       setImportSummary(
-        `${created + updated} coaches importados (${created} nuevos, ${updated} actualizados). ` +
+        `${created + updated} coaches importados (${created} nuevos, ${updated} actualizados, ${failed} con error). ` +
           `${coordinators.size} coordinadores detectados, ${linked.size} ya vinculados a un usuario, ` +
           `${missing.length} sin usuario${missing.length ? `: ${missing.join(", ")}` : "."}`,
       );
-      void queryClient.invalidateQueries({ queryKey: ["coaches"] });
+      setImportOpen(true);
+      await queryClient.invalidateQueries({ queryKey: ["coaches"] });
       return;
     }
 
     const profilesByEmail = new Map(
       (profilesQuery.data ?? []).map((p) => [p.email.toLowerCase(), p.id] as const),
     );
-    const existing = new Map(
-      coaches.map((c) => [c.full_name.trim().toLowerCase(), c.id] as const),
-    );
-    let imported = 0;
     const missing: string[] = [];
+    const payloads: ImportPayload[] = [];
 
     for (const record of records) {
       const fullName = record["full_name"];
@@ -337,33 +407,25 @@ function CoachesPage() {
       const coordEmail = (record["coordinator_email"] ?? "").toLowerCase();
       const coordinatorId = coordEmail ? (profilesByEmail.get(coordEmail) ?? null) : null;
       if (!coordinatorId) missing.push(fullName);
-
-      const payload = {
-        full_name: fullName,
+      payloads.push({
+        full_name: fullName.trim(),
         email: record["email"] || null,
         coordinator_id: coordinatorId,
         senior_name: record["senior_name"] || null,
         lob: record["lob"] || null,
         level: record["level"] || null,
         schedule: record["schedule"] || null,
-      };
-      const existingId = existing.get(fullName.trim().toLowerCase());
-      const { error } = existingId
-        ? await supabase.from("coaches").update(payload).eq("id", existingId)
-        : await supabase.from("coaches").insert(payload);
-      if (error) {
-        toast.error(`${fullName}: ${error.message}`);
-        continue;
-      }
-      imported += 1;
+      });
     }
 
-    const summary =
-      missing.length > 0
-        ? `${imported} ${t("csv_imported")}, ${missing.length} ${t("csv_no_coordinator")}: ${missing.join(", ")}`
-        : `${imported} ${t("csv_imported")}`;
-    setImportSummary(summary);
-    void queryClient.invalidateQueries({ queryKey: ["coaches"] });
+    await runBatches(payloads);
+
+    setImportSummary(
+      `${created + updated} ${t("csv_imported")} (${created} nuevos, ${updated} actualizados, ${failed} con error).` +
+        (missing.length ? ` ${missing.length} ${t("csv_no_coordinator")}: ${missing.join(", ")}` : ""),
+    );
+    setImportOpen(true);
+    await queryClient.invalidateQueries({ queryKey: ["coaches"] });
   }
 
   return (
