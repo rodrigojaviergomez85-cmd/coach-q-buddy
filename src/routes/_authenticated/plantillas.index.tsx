@@ -89,13 +89,15 @@ function TemplatesPage() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {templates.map((tpl) => (
-            <Link
+            <div
               key={tpl.id}
-              to="/plantillas/$templateId"
-              params={{ templateId: tpl.id }}
               className="group flex items-center justify-between gap-4 rounded-xl border bg-card px-5 py-4 shadow-panel transition-colors hover:border-primary/40"
             >
-              <div className="min-w-0">
+              <Link
+                to="/plantillas/$templateId"
+                params={{ templateId: tpl.id }}
+                className="min-w-0 flex-1"
+              >
                 <p className="truncate text-sm font-semibold">{tpl.name}</p>
                 <p className="mt-1 truncate text-xs text-muted-foreground">
                   {tpl.code}
@@ -112,9 +114,21 @@ function TemplatesPage() {
                     <span className="rounded-full chip-red px-2 py-0.5">{t("inactive")}</span>
                   ) : null}
                 </div>
-              </div>
-              <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-            </Link>
+              </Link>
+              {isAdmin ? (
+                <Switch
+                  checked={tpl.active}
+                  disabled={toggleActive.isPending}
+                  aria-label={t("active")}
+                  onCheckedChange={(checked) =>
+                    toggleActive.mutate({ id: tpl.id, active: checked })
+                  }
+                />
+              ) : null}
+              <Link to="/plantillas/$templateId" params={{ templateId: tpl.id }}>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            </div>
           ))}
         </div>
       )}
