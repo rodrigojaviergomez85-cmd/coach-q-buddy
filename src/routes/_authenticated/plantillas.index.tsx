@@ -1,9 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 
 import { PageHeader } from "@/components/layout/PageHeader";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/plantillas/")({
