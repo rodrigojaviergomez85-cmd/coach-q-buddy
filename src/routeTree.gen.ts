@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedCoachesRouteImport } from './routes/_authenticated/coaches'
+import { Route as AuthenticatedConfiguracionRouteImport } from './routes/_authenticated/configuracion'
 import { Route as AuthenticatedMonitoreosRouteImport } from './routes/_authenticated/monitoreos'
 import { Route as AuthenticatedPlantillasIndexRouteImport } from './routes/_authenticated/plantillas.index'
 import { Route as AuthenticatedPlantillasTemplateIdRouteImport } from './routes/_authenticated/plantillas.$templateId'
@@ -36,6 +37,12 @@ const AuthenticatedCoachesRoute = AuthenticatedCoachesRouteImport.update({
   path: '/coaches',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedConfiguracionRoute =
+  AuthenticatedConfiguracionRouteImport.update({
+    id: '/configuracion',
+    path: '/configuracion',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMonitoreosRoute = AuthenticatedMonitoreosRouteImport.update({
   id: '/monitoreos',
   path: '/monitoreos',
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/coaches': typeof AuthenticatedCoachesRoute
+  '/configuracion': typeof AuthenticatedConfiguracionRoute
   '/monitoreos': typeof AuthenticatedMonitoreosRoute
   '/plantillas/$templateId': typeof AuthenticatedPlantillasTemplateIdRoute
   '/plantillas/': typeof AuthenticatedPlantillasIndexRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/coaches': typeof AuthenticatedCoachesRoute
+  '/configuracion': typeof AuthenticatedConfiguracionRoute
   '/monitoreos': typeof AuthenticatedMonitoreosRoute
   '/plantillas/$templateId': typeof AuthenticatedPlantillasTemplateIdRoute
   '/plantillas': typeof AuthenticatedPlantillasIndexRoute
@@ -76,6 +85,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/coaches': typeof AuthenticatedCoachesRoute
+  '/_authenticated/configuracion': typeof AuthenticatedConfiguracionRoute
   '/_authenticated/monitoreos': typeof AuthenticatedMonitoreosRoute
   '/_authenticated/plantillas/$templateId': typeof AuthenticatedPlantillasTemplateIdRoute
   '/_authenticated/plantillas/': typeof AuthenticatedPlantillasIndexRoute
@@ -86,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/coaches'
+    | '/configuracion'
     | '/monitoreos'
     | '/plantillas/$templateId'
     | '/plantillas/'
@@ -94,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/coaches'
+    | '/configuracion'
     | '/monitoreos'
     | '/plantillas/$templateId'
     | '/plantillas'
@@ -103,6 +115,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/_authenticated/coaches'
+    | '/_authenticated/configuracion'
     | '/_authenticated/monitoreos'
     | '/_authenticated/plantillas/$templateId'
     | '/_authenticated/plantillas/'
@@ -144,6 +157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCoachesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/configuracion': {
+      id: '/_authenticated/configuracion'
+      path: '/configuracion'
+      fullPath: '/configuracion'
+      preLoaderRoute: typeof AuthenticatedConfiguracionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/monitoreos': {
       id: '/_authenticated/monitoreos'
       path: '/monitoreos'
@@ -170,6 +190,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCoachesRoute: typeof AuthenticatedCoachesRoute
+  AuthenticatedConfiguracionRoute: typeof AuthenticatedConfiguracionRoute
   AuthenticatedMonitoreosRoute: typeof AuthenticatedMonitoreosRoute
   AuthenticatedPlantillasTemplateIdRoute: typeof AuthenticatedPlantillasTemplateIdRoute
   AuthenticatedPlantillasIndexRoute: typeof AuthenticatedPlantillasIndexRoute
@@ -177,6 +198,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCoachesRoute: AuthenticatedCoachesRoute,
+  AuthenticatedConfiguracionRoute: AuthenticatedConfiguracionRoute,
   AuthenticatedMonitoreosRoute: AuthenticatedMonitoreosRoute,
   AuthenticatedPlantillasTemplateIdRoute:
     AuthenticatedPlantillasTemplateIdRoute,
