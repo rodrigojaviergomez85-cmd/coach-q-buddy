@@ -1,0 +1,3 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { MonitoringWizard } from "@/components/monitoring/MonitoringWizard";
+export const Route = createFileRoute("/_authenticated/monitoreos/nuevo")({ head: () => ({ meta: [{ title: "Nuevo monitoreo · QA Coaches E4K" }, { name: "description", content: "Crear un monitoreo de calidad de clase." }, { property: "og:title", content: "Nuevo monitoreo · QA Coaches E4K" }, { property: "og:description", content: "Crear un monitoreo de calidad de clase." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }), component: () => <MonitoringWizard /> });

@@ -4,7 +4,7 @@ import { ClipboardList } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useI18n } from "@/lib/i18n";
 
-export const Route = createFileRoute("/_authenticated/monitoreos")({
+export const Route = createFileRoute("/_authenticated/monitoreos/")({
   head: () => ({
     meta: [
       { title: "Monitoreos · QA Coaches E4K" },
