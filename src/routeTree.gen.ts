@@ -10,33 +10,121 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AuthenticatedCoachesRouteImport } from './routes/_authenticated/coaches'
+import { Route as AuthenticatedConfiguracionRouteImport } from './routes/_authenticated/configuracion'
+import { Route as AuthenticatedMonitoreosRouteImport } from './routes/_authenticated/monitoreos'
+import { Route as AuthenticatedPlantillasIndexRouteImport } from './routes/_authenticated/plantillas.index'
+import { Route as AuthenticatedPlantillasTemplateIdRouteImport } from './routes/_authenticated/plantillas.$templateId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedCoachesRoute = AuthenticatedCoachesRouteImport.update({
+  id: '/coaches',
+  path: '/coaches',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedConfiguracionRoute =
+  AuthenticatedConfiguracionRouteImport.update({
+    id: '/configuracion',
+    path: '/configuracion',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedMonitoreosRoute = AuthenticatedMonitoreosRouteImport.update({
+  id: '/monitoreos',
+  path: '/monitoreos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPlantillasIndexRoute =
+  AuthenticatedPlantillasIndexRouteImport.update({
+    id: '/plantillas/',
+    path: '/plantillas/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlantillasTemplateIdRoute =
+  AuthenticatedPlantillasTemplateIdRouteImport.update({
+    id: '/plantillas/$templateId',
+    path: '/plantillas/$templateId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/coaches': typeof AuthenticatedCoachesRoute
+  '/configuracion': typeof AuthenticatedConfiguracionRoute
+  '/monitoreos': typeof AuthenticatedMonitoreosRoute
+  '/plantillas/$templateId': typeof AuthenticatedPlantillasTemplateIdRoute
+  '/plantillas/': typeof AuthenticatedPlantillasIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/coaches': typeof AuthenticatedCoachesRoute
+  '/configuracion': typeof AuthenticatedConfiguracionRoute
+  '/monitoreos': typeof AuthenticatedMonitoreosRoute
+  '/plantillas/$templateId': typeof AuthenticatedPlantillasTemplateIdRoute
+  '/plantillas': typeof AuthenticatedPlantillasIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/login': typeof LoginRoute
+  '/_authenticated/coaches': typeof AuthenticatedCoachesRoute
+  '/_authenticated/configuracion': typeof AuthenticatedConfiguracionRoute
+  '/_authenticated/monitoreos': typeof AuthenticatedMonitoreosRoute
+  '/_authenticated/plantillas/$templateId': typeof AuthenticatedPlantillasTemplateIdRoute
+  '/_authenticated/plantillas/': typeof AuthenticatedPlantillasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/coaches'
+    | '/configuracion'
+    | '/monitoreos'
+    | '/plantillas/$templateId'
+    | '/plantillas/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/login'
+    | '/coaches'
+    | '/configuracion'
+    | '/monitoreos'
+    | '/plantillas/$templateId'
+    | '/plantillas'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/login'
+    | '/_authenticated/coaches'
+    | '/_authenticated/configuracion'
+    | '/_authenticated/monitoreos'
+    | '/_authenticated/plantillas/$templateId'
+    | '/_authenticated/plantillas/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +136,82 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/coaches': {
+      id: '/_authenticated/coaches'
+      path: '/coaches'
+      fullPath: '/coaches'
+      preLoaderRoute: typeof AuthenticatedCoachesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/configuracion': {
+      id: '/_authenticated/configuracion'
+      path: '/configuracion'
+      fullPath: '/configuracion'
+      preLoaderRoute: typeof AuthenticatedConfiguracionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/monitoreos': {
+      id: '/_authenticated/monitoreos'
+      path: '/monitoreos'
+      fullPath: '/monitoreos'
+      preLoaderRoute: typeof AuthenticatedMonitoreosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/plantillas/': {
+      id: '/_authenticated/plantillas/'
+      path: '/plantillas'
+      fullPath: '/plantillas/'
+      preLoaderRoute: typeof AuthenticatedPlantillasIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/plantillas/$templateId': {
+      id: '/_authenticated/plantillas/$templateId'
+      path: '/plantillas/$templateId'
+      fullPath: '/plantillas/$templateId'
+      preLoaderRoute: typeof AuthenticatedPlantillasTemplateIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCoachesRoute: typeof AuthenticatedCoachesRoute
+  AuthenticatedConfiguracionRoute: typeof AuthenticatedConfiguracionRoute
+  AuthenticatedMonitoreosRoute: typeof AuthenticatedMonitoreosRoute
+  AuthenticatedPlantillasTemplateIdRoute: typeof AuthenticatedPlantillasTemplateIdRoute
+  AuthenticatedPlantillasIndexRoute: typeof AuthenticatedPlantillasIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCoachesRoute: AuthenticatedCoachesRoute,
+  AuthenticatedConfiguracionRoute: AuthenticatedConfiguracionRoute,
+  AuthenticatedMonitoreosRoute: AuthenticatedMonitoreosRoute,
+  AuthenticatedPlantillasTemplateIdRoute:
+    AuthenticatedPlantillasTemplateIdRoute,
+  AuthenticatedPlantillasIndexRoute: AuthenticatedPlantillasIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

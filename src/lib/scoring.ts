@@ -1,0 +1,135 @@
+/**
+ * Reglas de negocio de QA Coaches E4K.
+ * Funciones puras: no tocan red, ni fechas del sistema.
+ */
+
+export type TemplateScoring = "points_sum" | "area_weighted" | "checklist";
+export type ItemKind = "item" | "checklist" | "penalty" | "bonus";
+export type AnswerResult = "si" | "no" | "na";
+
+export interface ScoringTemplate {
+  id?: string;
+  scoring: TemplateScoring | null;
+}
+
+export interface ScoringItem {
+  id: string;
+  kind: ItemKind | null;
+  area?: string | null;
+  points?: number | null;
+  area_points?: number | null;
+  penalty_kind?: string | null;
+}
+
+export interface ScoringAnswer {
+  item_id: string;
+  result: AnswerResult;
+}
+
+export interface PhraseRule {
+  min: number;
+  phrase: string;
+}
+
+export interface ScoringConfig {
+  bonus_points_each: number;
+  penalty_cap: number;
+  score_phrases?: PhraseRule[];
+  expectation_phrases?: PhraseRule[];
+}
+
+/** Redondea a 2 decimales. */
+export function round2(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+function answerMap(answers: ScoringAnswer[]): Map<string, AnswerResult> {
+  const map = new Map<string, AnswerResult>();
+  for (const a of answers) map.set(a.item_id, a.result);
+  return map;
+}
+
+/**
+ * Puntaje base (0-10) según el tipo de scoring de la plantilla.
+ * - points_sum: suma de puntos de items con 'si', normalizada a 10 sobre los aplicables.
+ * - area_weighted: por área, area_points x (si / aplicables); base = suma de áreas.
+ * - checklist: 10 x (checklist 'si' / checklist aplicables).
+ */
+export function computeBaseScore(
+  template: ScoringTemplate,
+  items: ScoringItem[],
+  answers: ScoringAnswer[],
+): number {
+  const results = answerMap(answers);
+  const resultOf = (item: ScoringItem): AnswerResult => results.get(item.id) ?? "na";
+
+  if (template.scoring === "checklist") {
+    const checks = items.filter((i) => i.kind === "checklist");
+    const applicable = checks.filter((i) => resultOf(i) !== "na");
+    if (applicable.length === 0) return 0;
+    const yes = applicable.filter((i) => resultOf(i) === "si").length;
+    return round2((10 * yes) / applicable.length);
+  }
+
+  if (template.scoring === "area_weighted") {
+    const scored = items.filter((i) => i.kind === "item");
+    const areas = new Map<string, ScoringItem[]>();
+    for (const item of scored) {
+      const key = item.area ?? "";
+      const list = areas.get(key) ?? [];
+      list.push(item);
+      areas.set(key, list);
+    }
+    let total = 0;
+    for (const list of areas.values()) {
+      const applicable = list.filter((i) => resultOf(i) !== "na");
+      if (applicable.length === 0) continue;
+      const yes = applicable.filter((i) => resultOf(i) === "si").length;
+      const areaPoints = Number(applicable[0]?.area_points ?? 0);
+      total += areaPoints * (yes / applicable.length);
+    }
+    return round2(total);
+  }
+
+  // points_sum (por defecto)
+  const scored = items.filter((i) => i.kind === "item");
+  const applicable = scored.filter((i) => resultOf(i) !== "na");
+  const possible = applicable.reduce((sum, i) => sum + Number(i.points ?? 0), 0);
+  if (possible <= 0) return 0;
+  const earned = applicable
+    .filter((i) => resultOf(i) === "si")
+    .reduce((sum, i) => sum + Number(i.points ?? 0), 0);
+  return round2((10 * earned) / possible);
+}
+
+/** Puntaje final: base + bonus, tope 10; si hay penalidad, tope penalty_cap. */
+export function computeFinalScore(
+  base: number,
+  bonusCount: number,
+  penaltyCount: number,
+  config: ScoringConfig,
+): number {
+  const bonusEach = Number(config.bonus_points_each ?? 0);
+  let final = Math.min(10, base + bonusCount * bonusEach);
+  if (penaltyCount > 0) final = Math.min(final, Number(config.penalty_cap ?? 5));
+  return round2(final);
+}
+
+function matchPhrase(score: number, rules: PhraseRule[] | undefined): string {
+  if (!rules || rules.length === 0) return "";
+  const sorted = [...rules].sort((a, b) => b.min - a.min);
+  for (const rule of sorted) {
+    if (score >= rule.min) return rule.phrase;
+  }
+  return sorted[sorted.length - 1]?.phrase ?? "";
+}
+
+/** Frase de resultado según el puntaje. */
+export function phraseFor(score: number, rules: PhraseRule[] | undefined): string {
+  return matchPhrase(score, rules);
+}
+
+/** Frase de expectativa del cliente según el puntaje. */
+export function expectationFor(score: number, rules: PhraseRule[] | undefined): string {
+  return matchPhrase(score, rules);
+}
