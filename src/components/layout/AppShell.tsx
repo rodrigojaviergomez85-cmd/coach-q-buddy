@@ -28,6 +28,7 @@ export function AppShell() {
   const nav = [
     { to: "/coaches", label: t("nav_coaches"), icon: Users },
     { to: "/monitoreos", label: t("nav_monitorings"), icon: ClipboardList },
+    { to: "/analizador", label: "Analizador", icon: BarChart3 },
     { to: "/plantillas", label: t("nav_templates"), icon: GraduationCap },
     ...(isAdmin ? [{ to: "/configuracion", label: t("nav_settings"), icon: Settings }] : []),
   ] as const;
