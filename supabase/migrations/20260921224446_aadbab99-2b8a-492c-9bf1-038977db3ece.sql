@@ -1,0 +1,2 @@
+REVOKE EXECUTE ON FUNCTION public.submit_coach_response(uuid, text, text, text) FROM anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.submit_coach_response(uuid, text, text, text) TO service_role;

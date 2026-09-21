@@ -88,6 +88,7 @@ export type Database = {
       monitoring_answers: {
         Row: {
           comment: string | null
+          evidence_time: number | null
           id: string
           item_id: string | null
           monitoring_id: string
@@ -96,6 +97,7 @@ export type Database = {
         }
         Insert: {
           comment?: string | null
+          evidence_time?: number | null
           id?: string
           item_id?: string | null
           monitoring_id: string
@@ -104,6 +106,7 @@ export type Database = {
         }
         Update: {
           comment?: string | null
+          evidence_time?: number | null
           id?: string
           item_id?: string | null
           monitoring_id?: string
@@ -192,7 +195,12 @@ export type Database = {
           base_score: number | null
           bonus_total: number | null
           class_date: string | null
+          class_timeline: Json | null
+          coach_commitment: string | null
+          coach_counter: string | null
           coach_id: string | null
+          coach_responded_at: string | null
+          coach_summary: string | null
           coordinator_id: string | null
           created_at: string
           customer_expectation: string | null
@@ -204,7 +212,9 @@ export type Database = {
           main_aoi: string | null
           penalty_applied: boolean
           previous_aois: Json
+          previous_commitment_status: string | null
           qa_date: string | null
+          recording_start_time: string | null
           result_phrase: string | null
           schedule: string | null
           share_token: string | null
@@ -221,7 +231,12 @@ export type Database = {
           base_score?: number | null
           bonus_total?: number | null
           class_date?: string | null
+          class_timeline?: Json | null
+          coach_commitment?: string | null
+          coach_counter?: string | null
           coach_id?: string | null
+          coach_responded_at?: string | null
+          coach_summary?: string | null
           coordinator_id?: string | null
           created_at?: string
           customer_expectation?: string | null
@@ -233,7 +248,9 @@ export type Database = {
           main_aoi?: string | null
           penalty_applied?: boolean
           previous_aois?: Json
+          previous_commitment_status?: string | null
           qa_date?: string | null
+          recording_start_time?: string | null
           result_phrase?: string | null
           schedule?: string | null
           share_token?: string | null
@@ -250,7 +267,12 @@ export type Database = {
           base_score?: number | null
           bonus_total?: number | null
           class_date?: string | null
+          class_timeline?: Json | null
+          coach_commitment?: string | null
+          coach_counter?: string | null
           coach_id?: string | null
+          coach_responded_at?: string | null
+          coach_summary?: string | null
           coordinator_id?: string | null
           created_at?: string
           customer_expectation?: string | null
@@ -262,7 +284,9 @@ export type Database = {
           main_aoi?: string | null
           penalty_applied?: boolean
           previous_aois?: Json
+          previous_commitment_status?: string | null
           qa_date?: string | null
+          recording_start_time?: string | null
           result_phrase?: string | null
           schedule?: string | null
           share_token?: string | null
@@ -433,6 +457,15 @@ export type Database = {
       get_report_by_token: { Args: { _token: string }; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
       is_senior_or_admin: { Args: never; Returns: boolean }
+      submit_coach_response: {
+        Args: {
+          _commitment: string
+          _counter?: string
+          _summary: string
+          _token: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
