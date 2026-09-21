@@ -561,7 +561,6 @@ function CoachesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <span className="sr-only">{lang}</span>
     </>
   );
 }
