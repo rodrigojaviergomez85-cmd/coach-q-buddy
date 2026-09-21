@@ -31,7 +31,7 @@ interface FormState { coach_id: string; template_id: string; class_date: string;
 const emptyStudent = (i: number): StudentDraft => ({ student_number: i + 1, student_name: "", gr: "", pr: "", fl: "", co: "", in: "", score: null, phrase: "", goal: false, coach_phrase: "", comment: "" });
 const initial: FormState = { coach_id: "", template_id: "", class_date: todaySV(), qa_date: todaySV(), syllabus: "", schedule: "", level: "", zoom_link: "", recording_start_time: "", previous_aois: [], previous_commitment: "", previous_commitment_status: null, kudos: [""], aois: [{ text: "", item_id: null }], general_comments: "", transcript_raw: null, transcript_metrics: null, class_timeline: null };
 
-export function MonitoringWizard({ monitoringId }: { monitoringId?: string }) {
+export function MonitoringWizard({ monitoringId, initialCoachId }: { monitoringId?: string; initialCoachId?: string }) {
   const navigate = useNavigate();
   const { profile } = useProfile();
   const [id, setId] = useState(monitoringId);
@@ -55,6 +55,8 @@ export function MonitoringWizard({ monitoringId }: { monitoringId?: string }) {
     const map = Object.fromEntries((config.data ?? []).map((x) => [x.key, x.value]));
     return { coaches: coaches.data as Coach[], templates: templates.data as Template[], items: items.data as MonitoringItem[], config: { bonus_points_each: Number(map["bonus_points_each"] ?? 0.25), penalty_cap: Number(map["penalty_cap"] ?? 5), score_phrases: (map["score_phrases"] ?? []) as unknown as PhraseRule[], expectation_phrases: (map["expectation_phrases"] ?? []) as unknown as PhraseRule[] } satisfies Config };
   }});
+
+  useEffect(() => { if (initialCoachId && setup.data && !form.coach_id) chooseCoach(initialCoachId); }, [initialCoachId, setup.data, form.coach_id]);
 
   useEffect(() => { if (!monitoringId || loaded.current) return; loaded.current = true; void (async () => {
     const { data: m, error } = await supabase.from("monitorings").select("*").eq("id", monitoringId).single(); if (error) { toast.error(error.message); return; }

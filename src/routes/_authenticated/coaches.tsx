@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
 import { Pencil, Plus, Upload } from "lucide-react";
@@ -379,7 +379,7 @@ function CoachesPage() {
                   return (
                     <tr key={coach.id} className="hover:bg-muted/40">
                       <td className="px-4 py-3">
-                        <p className="font-medium">{coach.full_name}</p>
+                        <Link to="/coaches/$coachId" params={{ coachId: coach.id }} className="font-medium text-primary hover:underline">{coach.full_name}</Link>
                         {coach.email ? (
                           <p className="text-xs text-muted-foreground">{coach.email}</p>
                         ) : null}
