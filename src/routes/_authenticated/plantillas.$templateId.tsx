@@ -208,7 +208,7 @@ function TemplateDetailPage() {
             ? `${template.code}${template.subject ? ` · ${template.subject}` : ""} · ${t("scoring")}: ${template.scoring ?? "—"}`
             : undefined
         }
-        action={
+        actions={
           isAdmin ? (
             <Button size="sm" onClick={() => setEditing(emptyDraft())}>
               <Plus className="size-4" />
