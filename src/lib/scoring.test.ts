@@ -50,17 +50,39 @@ describe("computeBaseScore points_sum", () => {
     expect(score).toBe(10);
   });
 
-  it("excluye los items marcados como n/a del total posible", () => {
+  it("n/a no penaliza ni reescala", () => {
     const score = computeBaseScore({ scoring: "points_sum" }, items, [
       { item_id: "a", result: "si" },
       { item_id: "b", result: "no" },
       { item_id: "c", result: "na" },
     ]);
-    expect(score).toBe(6.25); // 25 / 40 * 10
+    expect(score).toBe(7); // 10 * (50 - 15) / 50
   });
 
-  it("devuelve 0 si no hay items aplicables", () => {
-    expect(computeBaseScore({ scoring: "points_sum" }, items, [])).toBe(0);
+  it("empieza en 10 y solo baja con cada No", () => {
+    expect(computeBaseScore({ scoring: "points_sum" }, items, [])).toBe(10);
+    // Plantilla de 10 pts con un No de 0.5 → 9.5
+    expect(
+      computeBaseScore(
+        { scoring: "points_sum" },
+        [{ id: "p1", kind: "item", points: 10 }],
+        [{ item_id: "p1", result: "si" }],
+      ),
+    ).toBe(10);
+    // Plantilla de 50 pts con un No de 10 → 8
+    expect(
+      computeBaseScore(
+        { scoring: "points_sum" },
+        [
+          { id: "q1", kind: "item", points: 40 },
+          { id: "q2", kind: "item", points: 10 },
+        ],
+        [
+          { item_id: "q1", result: "si" },
+          { item_id: "q2", result: "no" },
+        ],
+      ),
+    ).toBe(8);
   });
 });
 
