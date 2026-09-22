@@ -5,9 +5,12 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   autoFlagResult,
   autoItemResult,
+  autoRuleResult,
+  matchAutoRule,
   type BettyAutoConfig,
   type BettyDeterministic,
 } from "./betty-metrics";
+import { computeBettyScore, type BettyScoring, type ReviewResult } from "./betty-review";
 import { phraseFor, round2, type PhraseRule } from "./scoring";
 import { parseTranscript } from "./transcript";
 
@@ -21,6 +24,8 @@ and say so in one short sentence. Transcripts garble children's speech: be toler
 mistakes and judge the coach's behavior, not the transcription quality.
 Also return: 3 kudos and 3 AOIs (Spanish, one sentence each, with a [mm:ss] reference), a 2-sentence
 summary in Spanish, and up to 4 "watch minutes" (mm:ss ranges) where the coordinator should look at the video.
+Judge only what a transcript can show. If the item requires seeing video (camera, smile, body language,
+energy, Prezi, slides, lighting, background, WOF displayed, chat, reactions, report cards, Inet), return nd.
 Respond ONLY with JSON matching the given schema.`;
 
 const MAX_CHARS = 120_000;
@@ -143,9 +148,15 @@ export const analyzeBettyScan = createServerFn({ method: "POST" })
       .maybeSingle();
     if (scanError || !scan) throw new Error("No encontré este análisis.");
 
+    const { data: template } = await supabase
+      .from("templates")
+      .select("id, scoring, has_student_grid")
+      .eq("id", scan.template_id)
+      .maybeSingle();
+
     const { data: items } = await supabase
       .from("template_items")
-      .select("id, kind, area, item_number, short_label, description, points, area_points, ai_mode, ai_instructions, sort_order")
+      .select("id, kind, section, area, item_number, short_label, description, points, area_points, ai_mode, ai_instructions, sort_order")
       .eq("template_id", scan.template_id)
       .order("sort_order");
 
@@ -166,7 +177,11 @@ export const analyzeBettyScan = createServerFn({ method: "POST" })
     const phrases = (Array.isArray(cfg["score_phrases"]) ? cfg["score_phrases"] : []) as PhraseRule[];
 
     const det = (scan.deterministic ?? {}) as unknown as BettyDeterministic;
-    const all = items ?? [];
+    // En plantillas con tabla de estudiantes (Friday, Monthly) Betty solo evalúa el checklist.
+    const all = (items ?? []).filter((i) => !(template?.has_student_grid && i.kind === "item"));
+    // Si la plantilla nunca fue calibrada, Betty usa el modo genérico con la descripción.
+    const calibrated = all.some((i) => i.ai_mode && i.ai_mode !== "manual");
+    const isManual = (mode: string | null) => calibrated && (mode ?? "manual") === "manual";
 
     // 1. Ítems automáticos (sin IA)
     type Row = {
@@ -182,11 +197,27 @@ export const analyzeBettyScan = createServerFn({ method: "POST" })
     const rows = new Map<string, Row>();
 
     for (const item of all) {
-      if (item.ai_mode !== "auto") continue;
-      const auto =
-        item.kind === "item"
-          ? autoItemResult(item.item_number ?? "", det, { level: scan.level, lob: scan.lob, config: autoConfig })
-          : autoFlagResult(item.description ?? "", det, { level: scan.level });
+      if (isManual(item.ai_mode)) continue;
+      let auto =
+        item.ai_mode === "auto"
+          ? item.kind === "item" || item.kind === "checklist"
+            ? autoItemResult(item.item_number ?? "", det, { level: scan.level, lob: scan.lob, config: autoConfig })
+            : autoFlagResult(item.description ?? "", det, { level: scan.level })
+          : null;
+      if (!auto && item.kind !== "item" && item.kind !== "checklist") {
+        auto = autoFlagResult(item.description ?? "", det, { level: scan.level });
+      }
+      if (!auto) {
+        const rule = matchAutoRule(item.description ?? "");
+        if (rule) {
+          auto = autoRuleResult(rule, det, {
+            level: scan.level,
+            lob: scan.lob,
+            config: autoConfig,
+            kind: item.kind,
+          });
+        }
+      }
       if (!auto) continue;
       const maxPoints = Number(item.points ?? 0);
       const score = item.kind === "item" ? round2(maxPoints * auto.ratio) : null;
@@ -203,7 +234,7 @@ export const analyzeBettyScan = createServerFn({ method: "POST" })
     }
 
     // 2. Ítems sugeridos (IA)
-    const suggest = all.filter((i) => i.ai_mode === "suggest");
+    const suggest = all.filter((i) => !rows.has(i.id) && !isManual(i.ai_mode));
     let aiOutput: AiOutput | null = null;
     let tokensIn = 0;
     let tokensOut = 0;
@@ -224,7 +255,7 @@ export const analyzeBettyScan = createServerFn({ method: "POST" })
             code: i.item_number ?? i.short_label ?? "",
             max_points: Number(i.points ?? 0),
             description: i.description,
-            instructions: i.ai_instructions ?? "",
+            instructions: i.ai_instructions ?? i.description ?? "",
           })),
         };
         try {
@@ -267,7 +298,7 @@ export const analyzeBettyScan = createServerFn({ method: "POST" })
     const applyAi = (list: AiItem[] | undefined) => {
       for (const entry of list ?? []) {
         const item = byId.get(entry.item_id);
-        if (!item || item.ai_mode !== "suggest") continue;
+        if (!item || rows.has(item.id) || isManual(item.ai_mode)) continue;
         const maxPoints = Number(item.points ?? 0);
         const score =
           item.kind === "item"
@@ -298,16 +329,29 @@ export const analyzeBettyScan = createServerFn({ method: "POST" })
         ai_score: null,
         ai_confidence: "baja",
         ai_evidence: [],
-        ai_note: item.ai_mode === "suggest" ? "IA no disponible" : "Requiere revisión manual",
+        ai_note: isManual(item.ai_mode) ? "Requiere revisión manual" : "IA no disponible",
         final_result: null,
         final_score: null,
       });
     }
 
-    const scored = all.filter((i) => i.kind === "item");
-    const totalPoints = scored.reduce((sum, i) => sum + Number(i.points ?? 0), 0);
-    const gained = scored.reduce((sum, i) => sum + Number(rows.get(i.id)?.ai_score ?? 0), 0);
-    const bettyScore = totalPoints > 0 ? round2((10 * gained) / totalPoints) : 0;
+    const resultOf = (id: string): ReviewResult => {
+      const r = rows.get(id)?.ai_result;
+      if (r === "si" || r === "parcial" || r === "no") return r;
+      return "";
+    };
+    const bettyScore = round2(
+      computeBettyScore(
+        (template?.scoring ?? "points_sum") as BettyScoring,
+        all.map((i) => ({
+          kind: i.kind,
+          points: i.points,
+          area_points: i.area_points,
+          area: i.area ?? i.section ?? "General",
+          result: resultOf(i.id),
+        })),
+      ).total,
+    );
 
     await supabase.from("betty_scan_answers").delete().eq("scan_id", scan.id);
     await supabase.from("betty_scan_answers").insert(
