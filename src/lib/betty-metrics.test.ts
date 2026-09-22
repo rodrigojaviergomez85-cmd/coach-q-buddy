@@ -110,8 +110,9 @@ describe("follow-up questions", () => {
       seg("Coach Pame", 10, 15, "And you? How was your weekend?"),
       seg("Coach Pame", 20, 25, "Open your books to page five"),
       seg("Ana", 30, 35, "I like action movies"),
+      seg("Ana", 1300, 1310, "That is all for today coach"),
     ]);
-    expect(det.follow_up_questions).toBe(2);
+    expect(det.follow_up_questions).toBe(3);
   });
 });
 
