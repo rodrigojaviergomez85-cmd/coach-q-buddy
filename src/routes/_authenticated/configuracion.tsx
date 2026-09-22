@@ -386,12 +386,14 @@ function MyPassword() {
       return;
     }
     setBusy(true);
-    const { error } = await supabase.auth.updateUser({ password: pwd.trim() });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
+    try {
+      await setMyPassword({ data: { password: pwd.trim() } });
+    } catch {
+      setBusy(false);
+      toast.error("No se pudo guardar la contraseña. Intenta de nuevo.");
       return;
     }
+    setBusy(false);
     setPwd("");
     toast.success("Contraseña guardada. Ya puedes entrar con correo y contraseña.");
   }
