@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { setMyPassword } from "@/lib/account.functions";
+
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -386,12 +388,14 @@ function MyPassword() {
       return;
     }
     setBusy(true);
-    const { error } = await supabase.auth.updateUser({ password: pwd.trim() });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
+    try {
+      await setMyPassword({ data: { password: pwd.trim() } });
+    } catch {
+      setBusy(false);
+      toast.error("No se pudo guardar la contraseña. Intenta de nuevo.");
       return;
     }
+    setBusy(false);
     setPwd("");
     toast.success("Contraseña guardada. Ya puedes entrar con correo y contraseña.");
   }
