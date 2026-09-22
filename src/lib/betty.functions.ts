@@ -10,7 +10,7 @@ import {
   type BettyAutoConfig,
   type BettyDeterministic,
 } from "./betty-metrics";
-import { computeBettyScore, type BettyScoring, type ReviewResult } from "./betty-review";
+import { bettyFinalScore, type BettyScoring, type ReviewResult } from "./betty-review";
 import { phraseFor, round2, type PhraseRule } from "./scoring";
 import { parseTranscript } from "./transcript";
 
@@ -340,18 +340,22 @@ export const analyzeBettyScan = createServerFn({ method: "POST" })
       if (r === "si" || r === "parcial" || r === "no") return r;
       return "";
     };
-    const bettyScore = round2(
-      computeBettyScore(
-        (template?.scoring ?? "points_sum") as BettyScoring,
-        all.map((i) => ({
-          kind: i.kind,
-          points: i.points,
-          area_points: i.area_points,
-          area: i.area ?? i.section ?? "General",
-          result: resultOf(i.id),
-        })),
-      ).total,
-    );
+    const isSi = (id: string) => rows.get(id)?.ai_result === "si";
+    const bonusCount = all.filter((i) => i.kind === "bonus" && isSi(i.id)).length;
+    const penaltyCount = all.filter((i) => i.kind === "penalty" && isSi(i.id)).length;
+    const bettyScore = bettyFinalScore(
+      (template?.scoring ?? "points_sum") as BettyScoring,
+      all.map((i) => ({
+        kind: i.kind,
+        points: i.points,
+        area_points: i.area_points,
+        area: i.area ?? i.section ?? "General",
+        result: resultOf(i.id),
+      })),
+      bonusCount,
+      penaltyCount,
+      { bonus_points_each: num("bonus_points_each", 0.25), penalty_cap: num("penalty_cap", 5) },
+    ).final;
 
     await supabase.from("betty_scan_answers").delete().eq("scan_id", scan.id);
     await supabase.from("betty_scan_answers").insert(

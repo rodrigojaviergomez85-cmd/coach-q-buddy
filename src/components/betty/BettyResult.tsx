@@ -11,10 +11,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { AreaBar, ScoreCircle, StudentBars, TalkTimePie, TrafficLight } from "@/components/monitoring/ReportVisuals";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDateSV } from "@/lib/date";
-import { computeFinalScore, round2 } from "@/lib/scoring";
+import { round2 } from "@/lib/scoring";
 import { zoomMarkerUrl } from "@/lib/monitoring";
 import { matchAutoRule, type BettyDeterministic, type Quote } from "@/lib/betty-metrics";
-import { computeBettyScore, earnedPoints, mapAiResult, type BettyScoring, type ReviewResult } from "@/lib/betty-review";
+import { bettyFinalScore, earnedPoints, mapAiResult, type BettyScoring, type ReviewResult } from "@/lib/betty-review";
 import type { Metrics } from "@/lib/transcript";
 import { cn } from "@/lib/utils";
 
@@ -119,9 +119,20 @@ export function BettyResult({ scanId }: { scanId: string }) {
 
   const areaOf = (row: AnswerRow) => row.item?.area ?? row.item?.section ?? "General";
 
+  const scoringConfig = {
+    bonus_points_each: data?.config.bonus_points_each ?? 0.25,
+    penalty_cap: data?.config.penalty_cap ?? 5,
+  };
+  const flagsOn = (kind: string, pick: (a: AnswerRow) => string) =>
+    flags.filter((f) => f.item?.kind === kind && pick(f) === "si").length;
+  const bonusCount = flagsOn("bonus", (f) => f.final_result);
+  const penaltyCount = flagsOn("penalty", (f) => f.final_result);
+  const bettyBonusCount = flagsOn("bonus", (f) => mapAiResult(f.ai_result));
+  const bettyPenaltyCount = flagsOn("penalty", (f) => mapAiResult(f.ai_result));
+
   const review = useMemo(
     () =>
-      computeBettyScore(
+      bettyFinalScore(
         (template?.scoring ?? "points_sum") as BettyScoring,
         items.map((a) => ({
           kind: a.item?.kind ?? "item",
@@ -130,8 +141,12 @@ export function BettyResult({ scanId }: { scanId: string }) {
           area: a.item?.area ?? a.item?.section ?? "General",
           result: a.final_result,
         })),
+        bonusCount,
+        penaltyCount,
+        scoringConfig,
       ),
-    [items, template?.scoring],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [items, template?.scoring, bonusCount, penaltyCount, scoringConfig.bonus_points_each, scoringConfig.penalty_cap],
   );
 
   const areas = useMemo(() => {
@@ -159,17 +174,28 @@ export function BettyResult({ scanId }: { scanId: string }) {
     });
   }
 
-  const scoringConfig = {
-    bonus_points_each: data?.config.bonus_points_each ?? 0.25,
-    penalty_cap: data?.config.penalty_cap ?? 5,
-  };
-  const bonusCount = flags.filter((f) => f.item?.kind === "bonus" && f.final_result === "si").length;
-  const penaltyCount = flags.filter((f) => f.item?.kind === "penalty" && f.final_result === "si").length;
-  const baseScore = review.total;
-  const reviewScore = computeFinalScore(baseScore, bonusCount, penaltyCount, scoringConfig);
+  const baseScore = review.base;
+  const reviewScore = review.final;
   const bonusTotal = round2(bonusCount * scoringConfig.bonus_points_each);
   const bettyScore = scan?.betty_score == null ? null : Number(scan.betty_score);
-  const changed = answers.some((a) => a.coordinator_changed);
+  const changed =
+    answers.some((a) => a.coordinator_changed) ||
+    bonusCount !== bettyBonusCount ||
+    penaltyCount !== bettyPenaltyCount;
+  const ndCount = items.filter((a) => a.final_result === "" || a.final_result === "na").length;
+
+  // Recalcula el puntaje guardado de análisis viejos con la misma lógica de la pantalla.
+  const scanStatus = scan?.status;
+  useEffect(() => {
+    if (!scanId || answers.length === 0 || changed) return;
+    if (scanStatus !== "analizado" || bettyScore == null) return;
+    if (Math.abs(bettyScore - reviewScore) < 0.01) return;
+    void supabase
+      .from("betty_scans")
+      .update({ betty_score: reviewScore })
+      .eq("id", scanId)
+      .then(() => refetch());
+  }, [scanId, answers.length, changed, scanStatus, bettyScore, reviewScore, refetch]);
 
   async function saveReview() {
     setSaving(true);
@@ -300,6 +326,11 @@ export function BettyResult({ scanId }: { scanId: string }) {
       <section className="flex flex-wrap items-center gap-5 rounded-xl border bg-card p-5">
         <div className="flex flex-col items-center gap-1">
           <ScoreCircle score={reviewScore} phrase={scan.betty_phrase} />
+          {ndCount > 0 ? (
+            <p className="text-xs text-muted-foreground">
+              {ndCount} {ndCount === 1 ? "ítem no determinable" : "ítems no determinables"} (no cuentan)
+            </p>
+          ) : null}
           {changed && bettyScore != null ? (
             <p className="text-xs text-muted-foreground">Betty {bettyScore.toFixed(1)} → revisado {reviewScore.toFixed(1)}</p>
           ) : null}

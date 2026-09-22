@@ -1,4 +1,4 @@
-import { round2 } from "./scoring";
+import { computeFinalScore, round2, type ScoringConfig } from "./scoring";
 
 export type ReviewResult = "si" | "parcial" | "no" | "na" | "";
 
@@ -129,4 +129,24 @@ export function computeBettyScore(
   }
   const total = possible > 0 ? round2((10 * (possible - lost)) / possible) : 0;
   return { total, areas: [...areaMap.entries()].map(([area, v]) => ({ area, ...v })) };
+}
+
+/**
+ * Puntaje final de Betty / de la revisión: misma función en el servidor y en la
+ * pantalla. nd y manual sin responder cuentan como N/A (no penalizan),
+ * parcial vale la mitad y los bonus/penalidades se aplican con las reglas del QA.
+ */
+export function bettyFinalScore(
+  scoring: BettyScoring,
+  items: BettyScoreItem[],
+  bonusCount: number,
+  penaltyCount: number,
+  config: ScoringConfig,
+): { base: number; final: number; areas: Array<{ area: string; earned: number; possible: number }> } {
+  const base = computeBettyScore(scoring, items);
+  return {
+    base: base.total,
+    final: computeFinalScore(base.total, bonusCount, penaltyCount, config),
+    areas: base.areas,
+  };
 }
