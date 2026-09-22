@@ -11,7 +11,7 @@ describe("betty-review", () => {
   it("ítem de 0.75 en Parcial suma 0.375 en área y total", () => {
     const result = computeReview([
       { points: 0.75, result: "parcial", area: "D1" },
-      { points: 0.25, result: "si", area: "D1" },
+      { points: 0.25, result: "si", area: "D2" },
     ]);
     expect(result.areas[0]!.earned).toBeCloseTo(0.375, 2);
     expect(result.earned).toBeCloseTo(0.625, 2);
