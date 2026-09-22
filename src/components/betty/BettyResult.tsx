@@ -14,10 +14,11 @@ import { formatDateSV } from "@/lib/date";
 import { round2 } from "@/lib/scoring";
 import { zoomMarkerUrl } from "@/lib/monitoring";
 import type { BettyDeterministic, Quote } from "@/lib/betty-metrics";
+import { computeReview, earnedPoints, mapAiResult, type ReviewResult } from "@/lib/betty-review";
 import type { Metrics } from "@/lib/transcript";
 import { cn } from "@/lib/utils";
 
-type FinalResult = "si" | "no" | "na" | "";
+type FinalResult = ReviewResult;
 
 interface AnswerRow {
   id: string;
@@ -92,7 +93,7 @@ export function BettyResult({ scanId }: { scanId: string }) {
       [...data.answers].sort((a, b) => (a.item?.sort_order ?? 0) - (b.item?.sort_order ?? 0)).map((a) => ({
         ...a,
         ai_evidence: Array.isArray(a.ai_evidence) ? a.ai_evidence : [],
-        final_result: (a.final_result ?? "") as FinalResult,
+        final_result: ((a.final_result as FinalResult | null) || mapAiResult(a.ai_result)) as FinalResult,
       })),
     );
     setKudos((data.scan?.ai_kudos as string[] | null ?? []).join("\n"));
@@ -108,20 +109,22 @@ export function BettyResult({ scanId }: { scanId: string }) {
   const items = answers.filter((a) => a.item?.kind === "item" || a.item?.kind === "checklist");
   const flags = answers.filter((a) => a.item?.kind === "penalty" || a.item?.kind === "bonus");
 
+  const review = useMemo(
+    () => computeReview(items.map((a) => ({ points: Number(a.item?.points ?? 0), result: a.final_result, area: a.item?.area ?? "General" }))),
+    [items],
+  );
+
   const areas = useMemo(() => {
-    const map = new Map<string, { earned: number; possible: number; rows: AnswerRow[] }>();
+    const map = new Map<string, AnswerRow[]>();
     for (const a of items) {
       const key = a.item?.area ?? "General";
-      const current = map.get(key) ?? { earned: 0, possible: 0, rows: [] };
-      current.rows.push(a);
-      current.possible += Number(a.item?.points ?? 0);
-      const points = Number(a.item?.points ?? 0);
-      const score = a.final_result === "si" ? points : a.final_result === "no" ? 0 : Number(a.final_score ?? a.ai_score ?? 0);
-      current.earned += score;
-      map.set(key, current);
+      map.set(key, [...(map.get(key) ?? []), a]);
     }
-    return [...map.entries()];
-  }, [items]);
+    return [...map.entries()].map(([area, rows]) => {
+      const totals = review.areas.find((x) => x.area === area);
+      return { area, rows, earned: totals?.earned ?? 0, possible: totals?.possible ?? 0 };
+    });
+  }, [items, review]);
 
   function update(id: string, patch: Partial<AnswerRow>) {
     setAnswers((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)));
@@ -131,16 +134,14 @@ export function BettyResult({ scanId }: { scanId: string }) {
     const points = Number(row.item?.points ?? 0);
     update(row.id, {
       final_result: value,
-      final_score: value === "si" ? points : value === "no" ? 0 : null,
-      coordinator_changed: true,
+      final_score: value === "" ? null : earnedPoints(points, value),
+      coordinator_changed: value !== mapAiResult(row.ai_result),
     });
   }
 
-  const reviewScore = useMemo(() => {
-    const total = items.reduce((sum, a) => sum + Number(a.item?.points ?? 0), 0);
-    const gained = items.reduce((sum, a) => sum + Number(a.final_score ?? a.ai_score ?? 0), 0);
-    return total > 0 ? round2((10 * gained) / total) : 0;
-  }, [items]);
+  const reviewScore = review.total;
+  const bettyScore = scan?.betty_score == null ? null : Number(scan.betty_score);
+  const changed = answers.some((a) => a.coordinator_changed);
 
   async function saveReview() {
     setSaving(true);
@@ -259,7 +260,12 @@ export function BettyResult({ scanId }: { scanId: string }) {
       </div>
 
       <section className="flex flex-wrap items-center gap-5 rounded-xl border bg-card p-5">
-        <ScoreCircle score={scan.betty_score} phrase={scan.betty_phrase} />
+        <div className="flex flex-col items-center gap-1">
+          <ScoreCircle score={reviewScore} phrase={scan.betty_phrase} />
+          {changed && bettyScore != null ? (
+            <p className="text-xs text-muted-foreground">Betty {bettyScore.toFixed(1)} → revisado {reviewScore.toFixed(1)}</p>
+          ) : null}
+        </div>
         <div className="min-w-0 flex-1 space-y-1">
           <h1 className="text-xl font-bold">{coach?.full_name ?? "Coach"}</h1>
           <p className="text-sm text-muted-foreground">
@@ -297,9 +303,9 @@ export function BettyResult({ scanId }: { scanId: string }) {
       ) : null}
 
       <section className="space-y-4">
-        {areas.map(([area, group]) => (
-          <div key={area} className="space-y-3 rounded-xl border bg-card p-5">
-            <AreaBar name={area} earned={group.earned} possible={group.possible} />
+        {areas.map((group) => (
+          <div key={group.area} className="space-y-3 rounded-xl border bg-card p-5">
+            <AreaBar name={group.area} earned={group.earned} possible={group.possible} />
             <div className="divide-y">
               {group.rows.map((row) => (
                 <div key={row.id} className="grid gap-2 py-3 sm:grid-cols-[1fr_auto]">
@@ -323,7 +329,7 @@ export function BettyResult({ scanId }: { scanId: string }) {
                     </div>
                   </div>
                   <div className="flex items-start gap-1">
-                    {(["si", "no", "na"] as const).map((value) => (
+                    {(["si", "parcial", "no", "na"] as const).map((value) => (
                       <button
                         key={value}
                         type="button"
@@ -333,7 +339,7 @@ export function BettyResult({ scanId }: { scanId: string }) {
                           row.final_result === value ? "border-primary bg-primary text-primary-foreground" : "bg-background",
                         )}
                       >
-                        {value === "si" ? "Sí" : value === "no" ? "No" : "N/A"}
+                        {value === "si" ? "Sí" : value === "parcial" ? "Parcial" : value === "no" ? "No" : "N/A"}
                       </button>
                     ))}
                   </div>
