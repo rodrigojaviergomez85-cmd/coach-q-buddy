@@ -158,6 +158,11 @@ export function reportShareText(report: ReportData, url: string, showScore = tru
     `Kudo: ${kudos}`,
     `AOI: ${aoi}`,
     metrics ? `Alumnos: ${metrics.students_pct} % (${metrics.traffic_light})` : "Talking time: sin análisis",
+    ...(metrics
+      ? metrics.speakers
+          .filter((s) => s.role === "alumno")
+          .map((s) => `· ${s.name}: ${s.min} min · ${s.pct_of_students} %`)
+      : []),
     url,
   ].join("\n");
 }

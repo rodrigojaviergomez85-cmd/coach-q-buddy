@@ -346,7 +346,7 @@ export function TranscriptAnalyzer({
                         <div className="flex items-center gap-2">
                           <div className="h-2 w-full max-w-40 overflow-hidden rounded-full bg-muted">
                             <div
-                              className="h-full rounded-full bg-emerald-500"
+                              className={`h-full rounded-full ${s.pct_of_students < config.student_min_pct ? "bg-destructive" : "bg-emerald-500"}`}
                               style={{ width: `${Math.min(100, s.pct_of_students)}%` }}
                             />
                           </div>
