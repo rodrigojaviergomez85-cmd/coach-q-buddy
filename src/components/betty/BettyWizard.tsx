@@ -21,7 +21,7 @@ import {
 import type { Metrics, Segment, SpeakerRole } from "@/lib/transcript";
 
 interface Coach { id: string; full_name: string; lob: string | null; level: string | null }
-interface Template { id: string; name: string; code: string }
+interface Template { id: string; name: string; code: string; active: boolean }
 
 const LEVELS = Array.from({ length: 13 }, (_, i) => `Level ${i}`);
 
@@ -44,18 +44,16 @@ export function BettyWizard() {
   const setup = useQuery({
     queryKey: ["betty-setup"],
     queryFn: async () => {
-      const [coaches, items] = await Promise.all([
+      const [coaches, templatesRes] = await Promise.all([
         supabase.from("coaches").select("id, full_name, lob, level").eq("active", true).order("full_name"),
-        supabase.from("template_items").select("template_id, ai_mode, template:templates(id, name, code, active)").neq("ai_mode", "manual"),
+        supabase.from("templates").select("id, name, code, active").eq("subject", "coach").order("name"),
       ]);
       if (coaches.error) throw coaches.error;
-      if (items.error) throw items.error;
-      const templates = new Map<string, Template>();
-      for (const row of items.data ?? []) {
-        const t = row.template as unknown as (Template & { active: boolean }) | null;
-        if (t?.id && t.active) templates.set(t.id, { id: t.id, name: t.name, code: t.code });
-      }
-      return { coaches: (coaches.data ?? []) as Coach[], templates: [...templates.values()] };
+      if (templatesRes.error) throw templatesRes.error;
+      const templates = [...((templatesRes.data ?? []) as Template[])].sort(
+        (a, b) => Number(b.active) - Number(a.active) || a.name.localeCompare(b.name),
+      );
+      return { coaches: (coaches.data ?? []) as Coach[], templates };
     },
   });
 
@@ -164,7 +162,9 @@ export function BettyWizard() {
               <SelectTrigger><SelectValue placeholder="Elige una plantilla" /></SelectTrigger>
               <SelectContent>
                 {(setup.data?.templates ?? []).map((t) => (
-                  <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.name}{t.active ? "" : " (inactiva)"}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
