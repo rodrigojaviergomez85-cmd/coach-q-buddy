@@ -140,6 +140,8 @@ function SettingsPage() {
     <>
       <PageHeader title={t("settings_title")} />
 
+      <BettyUsage />
+
       <section className="mb-8 rounded-xl border bg-card p-5 shadow-panel">
         <h2 className="mb-4 text-sm font-semibold">{t("settings_params")}</h2>
         <div className="grid gap-4 sm:grid-cols-2">
