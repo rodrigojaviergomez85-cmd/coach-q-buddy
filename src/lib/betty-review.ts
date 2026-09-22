@@ -18,7 +18,7 @@ export interface ReviewItem {
 export function earnedPoints(points: number, result: ReviewResult): number {
   const value = Number(points) || 0;
   if (result === "no") return 0;
-  if (result === "parcial") return round2(value / 2);
+  if (result === "parcial") return value / 2;
   return value;
 }
 
@@ -40,11 +40,11 @@ export function computeReview(items: ReviewItem[]): {
     const key = item.area ?? "General";
     const current = map.get(key) ?? { earned: 0, possible: 0 };
     const gained = earnedPoints(item.points, item.result);
-    current.earned = round2(current.earned + gained);
-    current.possible = round2(current.possible + (Number(item.points) || 0));
+    current.earned += gained;
+    current.possible += Number(item.points) || 0;
     map.set(key, current);
-    earned = round2(earned + gained);
-    possible = round2(possible + (Number(item.points) || 0));
+    earned += gained;
+    possible += Number(item.points) || 0;
   }
   return {
     earned,

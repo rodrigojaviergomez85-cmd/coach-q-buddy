@@ -5,7 +5,7 @@ describe("betty-review", () => {
   it("parcial vale la mitad de los puntos", () => {
     expect(earnedPoints(1, "parcial")).toBe(0.5);
     expect(earnedPoints(0.5, "parcial")).toBe(0.25);
-    expect(earnedPoints(0.75, "parcial")).toBe(0.38);
+    expect(earnedPoints(0.75, "parcial")).toBe(0.375);
   });
 
   it("ítem de 0.75 en Parcial suma 0.375 en área y total", () => {
