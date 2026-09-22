@@ -13,8 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatDateSV } from "@/lib/date";
 import { computeFinalScore, round2 } from "@/lib/scoring";
 import { zoomMarkerUrl } from "@/lib/monitoring";
-import type { BettyDeterministic, Quote } from "@/lib/betty-metrics";
-import { computeReview, earnedPoints, mapAiResult, type ReviewResult } from "@/lib/betty-review";
+import { matchAutoRule, type BettyDeterministic, type Quote } from "@/lib/betty-metrics";
+import { computeBettyScore, earnedPoints, mapAiResult, type BettyScoring, type ReviewResult } from "@/lib/betty-review";
 import type { Metrics } from "@/lib/transcript";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +33,7 @@ interface AnswerRow {
   coordinator_changed: boolean;
   comment: string | null;
   item: {
-    id: string; kind: string | null; area: string | null; item_number: string | null;
+    id: string; kind: string | null; area: string | null; section: string | null; item_number: string | null;
     short_label: string | null; description: string; points: number | null;
     area_points: number | null; sort_order: number | null; ai_mode: string | null;
   };
@@ -69,7 +69,11 @@ export function BettyResult({ scanId }: { scanId: string }) {
     queryKey: ["betty-scan", scanId],
     queryFn: async () => {
       const [scanRes, answersRes, configRes] = await Promise.all([
-        supabase.from("betty_scans").select("*, coach:coaches(id, full_name, lob, level)").eq("id", scanId).maybeSingle(),
+        supabase
+          .from("betty_scans")
+          .select("*, coach:coaches(id, full_name, lob, level), template:templates(id, name, scoring, has_student_grid)")
+          .eq("id", scanId)
+          .maybeSingle(),
         supabase.from("betty_scan_answers").select("*, item:template_items(*)").eq("scan_id", scanId),
         supabase.from("app_config").select("key, value").in("key", ["talk_time_green", "talk_time_yellow", "student_min_pct", "bonus_points_each", "penalty_cap"]),
       ]);
@@ -111,15 +115,29 @@ export function BettyResult({ scanId }: { scanId: string }) {
   const items = answers.filter((a) => a.item?.kind === "item" || a.item?.kind === "checklist");
   const flags = answers.filter((a) => a.item?.kind === "penalty" || a.item?.kind === "bonus");
 
+  const template = (scan as unknown as { template?: { name: string; scoring: string | null; has_student_grid: boolean } | null } | null)?.template ?? null;
+
+  const areaOf = (row: AnswerRow) => row.item?.area ?? row.item?.section ?? "General";
+
   const review = useMemo(
-    () => computeReview(items.map((a) => ({ points: Number(a.item?.points ?? 0), result: a.final_result, area: a.item?.area ?? "General" }))),
-    [items],
+    () =>
+      computeBettyScore(
+        (template?.scoring ?? "points_sum") as BettyScoring,
+        items.map((a) => ({
+          kind: a.item?.kind ?? "item",
+          points: a.item?.points ?? 0,
+          area_points: a.item?.area_points ?? 0,
+          area: a.item?.area ?? a.item?.section ?? "General",
+          result: a.final_result,
+        })),
+      ),
+    [items, template?.scoring],
   );
 
   const areas = useMemo(() => {
     const map = new Map<string, AnswerRow[]>();
     for (const a of items) {
-      const key = a.item?.area ?? "General";
+      const key = areaOf(a);
       map.set(key, [...(map.get(key) ?? []), a]);
     }
     return [...map.entries()].map(([area, rows]) => {
