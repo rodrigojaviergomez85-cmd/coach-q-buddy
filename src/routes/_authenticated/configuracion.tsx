@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { monthStartSV } from "@/lib/date";
 import { useProfile } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 
