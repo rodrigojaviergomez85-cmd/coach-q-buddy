@@ -598,6 +598,7 @@ export function matchAutoRule(description: string): AutoRule | null {
   // Expansión / pensamiento crítico
   if (
     d.includes("shopping list") ||
+    d.includes("shopping-list") ||
     d.includes("critical thinking") ||
     d.includes("expand") ||
     /\bBET\b/.test(raw) ||
