@@ -134,10 +134,12 @@ function SettingsPage() {
     return (
       <>
         <PageHeader title={t("settings_title")} />
+        <MyPassword />
         <p className="text-sm text-muted-foreground">{t("admin_only")}</p>
       </>
     );
   }
+
 
   return (
     <>
