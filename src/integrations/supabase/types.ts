@@ -531,27 +531,33 @@ export type Database = {
       profiles: {
         Row: {
           active: boolean
+          country: string | null
           created_at: string
           email: string
           full_name: string | null
           id: string
           role: string
+          team: string | null
         }
         Insert: {
           active?: boolean
+          country?: string | null
           created_at?: string
           email: string
           full_name?: string | null
           id?: string
           role?: string
+          team?: string | null
         }
         Update: {
           active?: boolean
+          country?: string | null
           created_at?: string
           email?: string
           full_name?: string | null
           id?: string
           role?: string
+          team?: string | null
         }
         Relationships: []
       }
