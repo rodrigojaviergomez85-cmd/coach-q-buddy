@@ -59,9 +59,10 @@ function AuthenticatedLayout() {
     <ProfileContext.Provider
       value={{
         profile: data,
-        isAdmin: data.role === "admin",
+        isAdmin: data.role === "admin" || data.role === "senior",
         isSenior: data.role === "senior",
         canSeeAll: data.role === "admin" || data.role === "senior",
+
       }}
     >
       <AppShell />
