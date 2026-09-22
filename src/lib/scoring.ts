@@ -51,9 +51,11 @@ function answerMap(answers: ScoringAnswer[]): Map<string, AnswerResult> {
 
 /**
  * Puntaje base (0-10) según el tipo de scoring de la plantilla.
- * - points_sum: suma de puntos de items con 'si', normalizada a 10 sobre los aplicables.
- * - area_weighted: por área, area_points x (si / aplicables); base = suma de áreas.
- * - checklist: 10 x (checklist 'si' / checklist aplicables).
+ * Regla igual al Excel original: el puntaje empieza en 10 y solo baja con cada "no".
+ * Los ítems N/A no penalizan ni reescalan.
+ * - points_sum: 10 x (total_puntos - puntos de items 'no') / total_puntos (TODOS los ítems).
+ * - area_weighted: por área, area_points x (ítems del área - ítems 'no') / ítems del área.
+ * - checklist: 10 x (total checklist - checklist 'no') / total checklist.
  */
 export function computeBaseScore(
   template: ScoringTemplate,
