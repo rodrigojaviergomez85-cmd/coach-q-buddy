@@ -58,7 +58,20 @@ const RAPPORT_END = ["let's start", "lets start", "first activity", "let's begin
 
 const CONNECTORS = ["because", "so ", "but ", "when ", "i think", "in my opinion", "for example", "since ", "although"];
 
-const PUSHES = ["why?", "tell me more", "what else", "how come", "and then?"];
+const FOLLOW_UP_PATTERNS = [
+  "why",
+  "what did you",
+  "where did",
+  "when did",
+  "how was",
+  "do you like",
+  "what about",
+  "what is your favorite",
+  "tell me",
+  "and you?",
+];
+
+const PUSHES = ["why", "tell me more", "what else", "how come", "and then", "what about", "because?"];
 
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
@@ -225,14 +238,14 @@ export function computeDeterministic(
 
   const startedOnTime = ctx.segments.length > 0 && rel(ctx.segments[0]!.start) <= 180;
 
-  // Follow-up questions del coach fuera de AF
+  // Follow-up questions del coach fuera de AF (patrón en cualquier posición)
   let followUps = 0;
   for (const seg of coachSegs) {
     if (rel(seg.start) >= afWindow.start) continue;
-    for (const sentence of seg.text.split(/[.?!]/)) {
+    for (const sentence of seg.text.split(/(?<=[.?!])/)) {
       const t = sentence.toLowerCase().trim();
       if (!t) continue;
-      if (/^(why|and why|what did you|where did|when did)\b/.test(t)) followUps += 1;
+      if (FOLLOW_UP_PATTERNS.some((p) => t.includes(p))) followUps += 1;
     }
   }
 
