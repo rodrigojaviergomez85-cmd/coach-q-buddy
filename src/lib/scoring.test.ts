@@ -124,6 +124,8 @@ describe("computeFinalScore", () => {
   it("suma bonus con tope 10", () => {
     expect(computeFinalScore(9.5, 2, 0, config)).toBe(10);
     expect(computeFinalScore(7, 1, 0, config)).toBe(8);
+    expect(computeFinalScore(7.1, 1, 0, config)).toBe(8.1);
+    expect(computeFinalScore(9, 0, 1, config)).toBe(5);
   });
 
   it("aplica el tope de penalidad", () => {

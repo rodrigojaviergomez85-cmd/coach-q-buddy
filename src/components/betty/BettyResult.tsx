@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AreaBar, ScoreCircle, StudentBars, TalkTimePie, TrafficLight } from "@/components/monitoring/ReportVisuals";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDateSV } from "@/lib/date";
-import { round2 } from "@/lib/scoring";
+import { computeFinalScore, round2 } from "@/lib/scoring";
 import { zoomMarkerUrl } from "@/lib/monitoring";
 import type { BettyDeterministic, Quote } from "@/lib/betty-metrics";
 import { computeReview, earnedPoints, mapAiResult, type ReviewResult } from "@/lib/betty-review";
@@ -71,7 +71,7 @@ export function BettyResult({ scanId }: { scanId: string }) {
       const [scanRes, answersRes, configRes] = await Promise.all([
         supabase.from("betty_scans").select("*, coach:coaches(id, full_name, lob, level)").eq("id", scanId).maybeSingle(),
         supabase.from("betty_scan_answers").select("*, item:template_items(*)").eq("scan_id", scanId),
-        supabase.from("app_config").select("key, value").in("key", ["talk_time_green", "talk_time_yellow", "student_min_pct"]),
+        supabase.from("app_config").select("key, value").in("key", ["talk_time_green", "talk_time_yellow", "student_min_pct", "bonus_points_each", "penalty_cap"]),
       ]);
       if (scanRes.error) throw scanRes.error;
       const cfg = Object.fromEntries((configRes.data ?? []).map((r) => [r.key, Number(r.value)]));
@@ -82,6 +82,8 @@ export function BettyResult({ scanId }: { scanId: string }) {
           talk_time_green: cfg["talk_time_green"] ?? 70,
           talk_time_yellow: cfg["talk_time_yellow"] ?? 55,
           student_min_pct: cfg["student_min_pct"] ?? 8,
+          bonus_points_each: cfg["bonus_points_each"] ?? 0.25,
+          penalty_cap: cfg["penalty_cap"] ?? 5,
         },
       };
     },
@@ -139,7 +141,15 @@ export function BettyResult({ scanId }: { scanId: string }) {
     });
   }
 
-  const reviewScore = review.total;
+  const scoringConfig = {
+    bonus_points_each: data?.config.bonus_points_each ?? 0.25,
+    penalty_cap: data?.config.penalty_cap ?? 5,
+  };
+  const bonusCount = flags.filter((f) => f.item?.kind === "bonus" && f.final_result === "si").length;
+  const penaltyCount = flags.filter((f) => f.item?.kind === "penalty" && f.final_result === "si").length;
+  const baseScore = review.total;
+  const reviewScore = computeFinalScore(baseScore, bonusCount, penaltyCount, scoringConfig);
+  const bonusTotal = round2(bonusCount * scoringConfig.bonus_points_each);
   const bettyScore = scan?.betty_score == null ? null : Number(scan.betty_score);
   const changed = answers.some((a) => a.coordinator_changed);
 
@@ -211,6 +221,10 @@ export function BettyResult({ scanId }: { scanId: string }) {
           transcript_raw: scan.transcript_raw,
           transcript_metrics: scan.transcript_metrics as never,
           class_timeline: scan.class_timeline as never,
+          base_score: baseScore,
+          bonus_total: bonusTotal,
+          penalty_applied: penaltyCount > 0,
+          final_score: reviewScore,
           kudos: kudos.split("\n").filter((l) => l.trim()) as never,
           aois: aois.split("\n").filter((l) => l.trim()).map((text) => ({ text })) as never,
         })
@@ -219,11 +233,17 @@ export function BettyResult({ scanId }: { scanId: string }) {
       if (error) throw error;
 
       const rows = answers
-        .filter((a) => a.final_result === "si" || a.final_result === "no" || a.final_result === "na")
+        .filter((a) => {
+          const kind = a.item?.kind;
+          if (kind === "penalty" || kind === "bonus") return true;
+          return a.final_result === "si" || a.final_result === "no" || a.final_result === "na";
+        })
         .map((a) => ({
           monitoring_id: monitoring.id,
           item_id: a.item_id,
-          result: a.final_result as "si" | "no" | "na",
+          result: (a.item?.kind === "penalty" || a.item?.kind === "bonus"
+            ? a.final_result === "si" ? "si" : "no"
+            : a.final_result) as "si" | "no" | "na",
           comment: [a.ai_note ?? "", ...a.ai_evidence.map((e) => `[${e.m}] «${e.quote}»`)].filter(Boolean).join(" · ") || null,
         }));
       if (rows.length > 0) await supabase.from("monitoring_answers").insert(rows);
@@ -265,6 +285,9 @@ export function BettyResult({ scanId }: { scanId: string }) {
           {changed && bettyScore != null ? (
             <p className="text-xs text-muted-foreground">Betty {bettyScore.toFixed(1)} → revisado {reviewScore.toFixed(1)}</p>
           ) : null}
+          <p className="text-center text-xs text-muted-foreground">
+            Base {baseScore.toFixed(1)} · Bonus +{bonusTotal.toFixed(2)} · Penalidad ({penaltyCount > 0 ? "Auto 5" : "—"})
+          </p>
         </div>
         <div className="min-w-0 flex-1 space-y-1">
           <h1 className="text-xl font-bold">{coach?.full_name ?? "Coach"}</h1>
