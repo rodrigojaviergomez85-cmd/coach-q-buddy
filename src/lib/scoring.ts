@@ -65,12 +65,13 @@ export function computeBaseScore(
   const results = answerMap(answers);
   const resultOf = (item: ScoringItem): AnswerResult => results.get(item.id) ?? "na";
 
+  const isNo = (item: ScoringItem): boolean => resultOf(item) === "no";
+
   if (template.scoring === "checklist") {
     const checks = items.filter((i) => i.kind === "checklist");
-    const applicable = checks.filter((i) => resultOf(i) !== "na");
-    if (applicable.length === 0) return 0;
-    const yes = applicable.filter((i) => resultOf(i) === "si").length;
-    return round2((10 * yes) / applicable.length);
+    if (checks.length === 0) return 0;
+    const no = checks.filter(isNo).length;
+    return round2((10 * (checks.length - no)) / checks.length);
   }
 
   if (template.scoring === "area_weighted") {
@@ -84,24 +85,22 @@ export function computeBaseScore(
     }
     let total = 0;
     for (const list of areas.values()) {
-      const applicable = list.filter((i) => resultOf(i) !== "na");
-      if (applicable.length === 0) continue;
-      const yes = applicable.filter((i) => resultOf(i) === "si").length;
-      const areaPoints = Number(applicable[0]?.area_points ?? 0);
-      total += areaPoints * (yes / applicable.length);
+      if (list.length === 0) continue;
+      const no = list.filter(isNo).length;
+      const areaPoints = Number(list[0]?.area_points ?? 0);
+      total += (areaPoints * (list.length - no)) / list.length;
     }
     return round2(total);
   }
 
   // points_sum (por defecto)
   const scored = items.filter((i) => i.kind === "item");
-  const applicable = scored.filter((i) => resultOf(i) !== "na");
-  const possible = applicable.reduce((sum, i) => sum + Number(i.points ?? 0), 0);
+  const possible = scored.reduce((sum, i) => sum + Number(i.points ?? 0), 0);
   if (possible <= 0) return 0;
-  const earned = applicable
-    .filter((i) => resultOf(i) === "si")
+  const lost = scored
+    .filter(isNo)
     .reduce((sum, i) => sum + Number(i.points ?? 0), 0);
-  return round2((10 * earned) / possible);
+  return round2((10 * (possible - lost)) / possible);
 }
 
 /** Puntaje final: base + bonus, tope 10; si hay penalidad, tope penalty_cap. */
