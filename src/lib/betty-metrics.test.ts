@@ -5,6 +5,7 @@ import {
   autoItemResult,
   computeDeterministic,
   isSpanishSegment,
+  matchAutoRule,
   transcriptHash,
   type BettyAutoConfig,
 } from "./betty-metrics";
@@ -179,5 +180,35 @@ describe("hash", () => {
   it("es estable y distinto por contenido", () => {
     expect(transcriptHash("abc")).toBe(transcriptHash("abc"));
     expect(transcriptHash("abc")).not.toBe(transcriptHash("abd"));
+  });
+});
+
+describe("matchAutoRule", () => {
+  it("M-TH ítem 7: alumnos evaluados en AF con 3", () => {
+    const rule = matchAutoRule("At least three trainees are evaluated in AF (Automatic Fluency).");
+    expect(rule?.id).toBe("af_students");
+    expect(rule?.param).toBe(3);
+  });
+
+  it("SOS: student-centered (70–80% student talk time) → P1", () => {
+    expect(matchAutoRule("The class is student-centered (70–80% student talk time).")?.id).toBe("p1");
+  });
+
+  it("Adults: AF: Three or more trainees → AF con 3", () => {
+    const rule = matchAutoRule("AF: Three or more trainees participated.");
+    expect(rule?.id).toBe("af_students");
+    expect(rule?.param).toBe(3);
+  });
+
+  it("Friday checklist '10 minimum' no tiene regla", () => {
+    expect(matchAutoRule("Students report cards completed, 10 minimum.")).toBeNull();
+  });
+
+  it("Bet Well: shopping-list answers → P5", () => {
+    expect(matchAutoRule("Coach avoids shopping-list answers from trainees.")?.id).toBe("p5");
+  });
+
+  it("CC: English environment → regla de español", () => {
+    expect(matchAutoRule("The coach keeps an English environment during the class.")?.id).toBe("spanish");
   });
 });

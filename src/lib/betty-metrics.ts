@@ -453,3 +453,230 @@ export function transcriptHash(text: string): string {
   }
   return `${h1.toString(16).padStart(8, "0")}${h2.toString(16).padStart(8, "0")}`;
 }
+
+// ============================================================
+// Reglas automáticas por palabras clave en la descripción del ítem
+// ============================================================
+
+export type AutoRuleId =
+  | "p1"
+  | "p2"
+  | "m2"
+  | "spanish"
+  | "af_students"
+  | "e2"
+  | "break"
+  | "boosters"
+  | "dead_air"
+  | "p5";
+
+export interface AutoRule {
+  id: AutoRuleId;
+  label: string;
+  /** Número exigido por el ítem (alumnos en AF, boosters, etc.). */
+  param?: number;
+}
+
+const RULE_LABELS: Record<AutoRuleId, string> = {
+  p1: "Talking time de alumnos",
+  p2: "Participación equilibrada",
+  m2: "Afirmaciones",
+  spanish: "Ambiente en inglés",
+  af_students: "Alumnos evaluados en AF",
+  e2: "Rapport en los primeros minutos",
+  break: "Break respetado",
+  boosters: "Boosters",
+  dead_air: "Ritmo sin tiempos muertos",
+  p5: "Expansión / pensamiento crítico",
+};
+
+function flat(text: string): string {
+  return ` ${String(text ?? "")
+    .toLowerCase()
+    .replace(/[–—]/g, "-")
+    .replace(/[^\p{L}\p{N}%/.-]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()} `;
+}
+
+/**
+ * Detecta si la descripción de un ítem se puede resolver con las métricas
+ * deterministas en lugar de la IA.
+ */
+export function matchAutoRule(description: string): AutoRule | null {
+  const raw = String(description ?? "");
+  const d = flat(raw);
+  const rule = (id: AutoRuleId, param?: number): AutoRule => ({
+    id,
+    label: RULE_LABELS[id],
+    ...(param === undefined ? {} : { param }),
+  });
+
+  // Ambiente en inglés / español del coach
+  if (
+    d.includes("english environment") ||
+    d.includes("english-speaking environment") ||
+    d.includes("in english 90") ||
+    d.includes("too much spanish")
+  ) {
+    return rule("spanish");
+  }
+
+  // Alumnos evaluados en AF
+  const afCount = /\b(three|3)\s+(or more\s+)?(trainees|students)/.test(d)
+    ? 3
+    : /\b(two|2)\s+(or more\s+)?(trainees|students)/.test(d)
+      ? 2
+      : null;
+  const afContext =
+    d.includes("evaluated in af") ||
+    d.includes("trainees during automatic fluency") ||
+    d.includes("automatic fluency") ||
+    / af[ :]/.test(d);
+  if (afCount !== null && afContext) return rule("af_students", afCount);
+  if (d.includes("evaluated in af") || d.includes("trainees during automatic fluency")) {
+    return rule("af_students", 3);
+  }
+
+  // Talking time de alumnos
+  if (
+    d.includes("student talk time") ||
+    d.includes("student-centered") ||
+    d.includes("student centered") ||
+    d.includes("80/20") ||
+    d.includes("70-80%") ||
+    d.includes("70-80")
+  ) {
+    return rule("p1");
+  }
+
+  // Participación equilibrada
+  if (
+    d.includes("equal participation") ||
+    d.includes("equalized participation") ||
+    d.includes("everyone spoke") ||
+    d.includes("no passive trainees")
+  ) {
+    return rule("p2");
+  }
+
+  if (d.includes("affirmations")) return rule("m2");
+
+  // Rapport en los primeros minutos
+  if (
+    d.includes("first 5 minutes") ||
+    d.includes("first 3-5 minutes") ||
+    (d.includes("rapport") && d.includes("minute"))
+  ) {
+    return rule("e2");
+  }
+
+  if (d.includes("break time") || d.includes("respected break")) return rule("break");
+
+  // Boosters con un número
+  if (d.includes("booster")) {
+    const wordNumbers: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 };
+    let n: number | null = null;
+    const word = d.match(/\b(one|two|three|four|five|six)\s+boosters?/);
+    if (word) n = wordNumbers[word[1]!] ?? null;
+    if (n === null) {
+      const digits = d.match(/(\d+)\s*-\s*(\d+)/);
+      if (digits) n = Number(digits[1]);
+    }
+    if (n === null) {
+      const single = d.match(/(\d+)\s+boosters?/) ?? d.match(/boosters?[^\d]{0,12}(\d+)/);
+      if (single) n = Number(single[1]);
+    }
+    if (n === null && d.includes("required number")) n = 2;
+    if (n !== null && Number.isFinite(n)) return rule("boosters", n);
+  }
+
+  if (d.includes("dead air") || d.includes("fast-paced") || d.includes("fast paced")) {
+    return rule("dead_air");
+  }
+
+  // Expansión / pensamiento crítico
+  if (
+    d.includes("shopping list") ||
+    d.includes("shopping-list") ||
+    d.includes("critical thinking") ||
+    d.includes("expand") ||
+    /\bBET\b/.test(raw) ||
+    /\bWELL\b/.test(raw)
+  ) {
+    return rule("p5");
+  }
+
+  return null;
+}
+
+/** Resuelve una regla automática contra las métricas deterministas. */
+export function autoRuleResult(
+  rule: AutoRule,
+  det: BettyDeterministic,
+  opts: { level?: string | null; lob?: string | null; config: BettyAutoConfig; kind?: string | null },
+): AutoResult | null {
+  switch (rule.id) {
+    case "p1":
+      return autoItemResult("P1", det, opts);
+    case "p2":
+      return autoItemResult("P2", det, opts);
+    case "m2":
+      return autoItemResult("M2", det, opts);
+    case "e2":
+      return autoItemResult("E2", det, opts);
+    case "p5":
+      return autoItemResult("P5", det, opts);
+    case "spanish": {
+      const pct = det.coach_spanish_pct;
+      const note = `Español del coach ${pct} % (meta ≤ 10 %).`;
+      const good: AutoResult =
+        pct <= 10
+          ? { result: "si", ratio: 1, note }
+          : pct <= 20
+            ? { result: "parcial", ratio: 0.5, note }
+            : { result: "no", ratio: 0, note };
+      if (opts.kind === "penalty") {
+        const over = pct > 20;
+        return { result: over ? "si" : "no", ratio: over ? 1 : 0, note };
+      }
+      return good;
+    }
+    case "af_students": {
+      const target = rule.param ?? 3;
+      const n = det.af_students.length;
+      const note = `${n} alumnos hablaron en AF · meta ${target}.`;
+      if (n >= target) return { result: "si", ratio: 1, note };
+      if (n >= target - 1) return { result: "parcial", ratio: 0.5, note };
+      return { result: "no", ratio: 0, note };
+    }
+    case "break": {
+      const min = det.break.duration_min;
+      const note = `Break de ${min} min (meta 3–5 min).`;
+      if (min >= 3 && min <= 5) return { result: "si", ratio: 1, note };
+      if (min > 0) return { result: "parcial", ratio: 0.5, note };
+      return { result: "no", ratio: 0, note };
+    }
+    case "boosters": {
+      const target = rule.param ?? 2;
+      const n = det.boosters.count;
+      const note = `${n} boosters · meta ${target}.`;
+      if (n >= target) return { result: "si", ratio: 1, note };
+      if (n >= Math.ceil(target / 2)) return { result: "parcial", ratio: 0.5, note };
+      return { result: "no", ratio: 0, note };
+    }
+    case "dead_air": {
+      const long = det.dead_air.filter((d) => d.duration_min > 2);
+      const note = `${long.length} tiempos muertos de más de 2 min.`;
+      if (long.length === 0) return { result: "si", ratio: 1, note };
+      if (long.length === 1) return { result: "parcial", ratio: 0.5, note };
+      return { result: "no", ratio: 0, note };
+    }
+    default:
+      return null;
+  }
+}
+
+export function autoRuleLabel(id: AutoRuleId): string {
+  return RULE_LABELS[id];
+}
