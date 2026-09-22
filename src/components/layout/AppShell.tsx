@@ -70,7 +70,15 @@ export function AppShell() {
                   : "text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
               )}
             >
-              <item.icon className="size-4 shrink-0" />
+              {"img" in item && item.img ? (
+                <img
+                  src={item.img}
+                  alt=""
+                  className="size-6 shrink-0 rounded-full border border-sidebar-border object-cover"
+                />
+              ) : (
+                <item.icon className="size-4 shrink-0" />
+              )}
               {item.label}
             </Link>
           );
