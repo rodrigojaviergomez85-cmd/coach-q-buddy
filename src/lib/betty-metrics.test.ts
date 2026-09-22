@@ -5,6 +5,7 @@ import {
   autoItemResult,
   computeDeterministic,
   isSpanishSegment,
+  matchAutoRule,
   transcriptHash,
   type BettyAutoConfig,
 } from "./betty-metrics";
