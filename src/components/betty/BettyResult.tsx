@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AreaBar, ScoreCircle, StudentBars, TalkTimePie, TrafficLight } from "@/components/monitoring/ReportVisuals";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDateSV } from "@/lib/date";
-import { computeFinalScore, round2 } from "@/lib/scoring";
+import { round2 } from "@/lib/scoring";
 import { zoomMarkerUrl } from "@/lib/monitoring";
 import { matchAutoRule, type BettyDeterministic, type Quote } from "@/lib/betty-metrics";
 import { bettyFinalScore, earnedPoints, mapAiResult, type BettyScoring, type ReviewResult } from "@/lib/betty-review";
@@ -183,6 +183,19 @@ export function BettyResult({ scanId }: { scanId: string }) {
     bonusCount !== bettyBonusCount ||
     penaltyCount !== bettyPenaltyCount;
   const ndCount = items.filter((a) => a.final_result === "" || a.final_result === "na").length;
+
+  // Recalcula el puntaje guardado de análisis viejos con la misma lógica de la pantalla.
+  const scanStatus = scan?.status;
+  useEffect(() => {
+    if (!scanId || answers.length === 0 || changed) return;
+    if (scanStatus !== "analizado" || bettyScore == null) return;
+    if (Math.abs(bettyScore - reviewScore) < 0.01) return;
+    void supabase
+      .from("betty_scans")
+      .update({ betty_score: reviewScore })
+      .eq("id", scanId)
+      .then(() => refetch());
+  }, [scanId, answers.length, changed, scanStatus, bettyScore, reviewScore, refetch]);
 
   async function saveReview() {
     setSaving(true);
