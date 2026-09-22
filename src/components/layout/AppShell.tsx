@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 
+import bettyAvatar from "@/assets/coach-betty.png.asset.json";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { signOutCleanly, useProfile } from "@/lib/auth";
@@ -32,7 +33,7 @@ export function AppShell() {
     { to: "/coaches", label: "Mis coaches", icon: Users },
     { to: "/monitoreos", label: t("nav_monitorings"), icon: ClipboardList },
     { to: "/analizador", label: "Analizador", icon: BarChart3 },
-    { to: "/betty", label: "Coach Betty Well", icon: Sparkles },
+    { to: "/betty", label: "Coach Betty Well", icon: Sparkles, img: bettyAvatar.url },
     { to: "/plantillas", label: t("nav_templates"), icon: GraduationCap },
     ...(isAdmin ? [{ to: "/configuracion", label: t("nav_settings"), icon: Settings }] : []),
   ] as const;
@@ -69,7 +70,15 @@ export function AppShell() {
                   : "text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
               )}
             >
-              <item.icon className="size-4 shrink-0" />
+              {"img" in item && item.img ? (
+                <img
+                  src={item.img}
+                  alt=""
+                  className="size-6 shrink-0 rounded-full border border-sidebar-border object-cover"
+                />
+              ) : (
+                <item.icon className="size-4 shrink-0" />
+              )}
               {item.label}
             </Link>
           );
