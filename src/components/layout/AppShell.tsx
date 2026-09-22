@@ -35,7 +35,12 @@ export function AppShell() {
     { to: "/analizador", label: "Analizador", icon: BarChart3 },
     { to: "/betty", label: "Coach Betty Well", icon: Sparkles, img: bettyAvatar.url },
     { to: "/plantillas", label: t("nav_templates"), icon: GraduationCap },
-    ...(isAdmin ? [{ to: "/configuracion", label: t("nav_settings"), icon: Settings }] : []),
+    ...(isAdmin
+      ? [
+          { to: "/admin/users/import", label: "Importar usuarios", icon: Users },
+          { to: "/configuracion", label: t("nav_settings"), icon: Settings },
+        ]
+      : []),
   ] as const;
 
   async function handleSignOut() {

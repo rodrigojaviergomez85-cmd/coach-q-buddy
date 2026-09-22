@@ -28,6 +28,7 @@ import { Route as AuthenticatedMonitoreosIdRouteImport } from './routes/_authent
 import { Route as AuthenticatedMonitoreosNuevoRouteImport } from './routes/_authenticated/monitoreos.nuevo'
 import { Route as AuthenticatedPlantillasIndexRouteImport } from './routes/_authenticated/plantillas.index'
 import { Route as AuthenticatedPlantillasTemplateIdRouteImport } from './routes/_authenticated/plantillas.$templateId'
+import { Route as AuthenticatedAdminUsersImportRouteImport } from './routes/_authenticated/admin.users.import'
 import { Route as AuthenticatedMonitoreosIdEditarRouteImport } from './routes/_authenticated/monitoreos.$id.editar'
 
 const IndexRoute = IndexRouteImport.update({
@@ -132,6 +133,12 @@ const AuthenticatedPlantillasTemplateIdRoute =
     path: '/plantillas/$templateId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminUsersImportRoute =
+  AuthenticatedAdminUsersImportRouteImport.update({
+    id: '/admin/users/import',
+    path: '/admin/users/import',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMonitoreosIdEditarRoute =
   AuthenticatedMonitoreosIdEditarRouteImport.update({
     id: '/editar',
@@ -158,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/betty/': typeof AuthenticatedBettyIndexRoute
   '/monitoreos/': typeof AuthenticatedMonitoreosIndexRoute
   '/plantillas/': typeof AuthenticatedPlantillasIndexRoute
+  '/admin/users/import': typeof AuthenticatedAdminUsersImportRoute
   '/monitoreos/$id/editar': typeof AuthenticatedMonitoreosIdEditarRoute
 }
 export interface FileRoutesByTo {
@@ -179,6 +187,7 @@ export interface FileRoutesByTo {
   '/betty': typeof AuthenticatedBettyIndexRoute
   '/monitoreos': typeof AuthenticatedMonitoreosIndexRoute
   '/plantillas': typeof AuthenticatedPlantillasIndexRoute
+  '/admin/users/import': typeof AuthenticatedAdminUsersImportRoute
   '/monitoreos/$id/editar': typeof AuthenticatedMonitoreosIdEditarRoute
 }
 export interface FileRoutesById {
@@ -202,6 +211,7 @@ export interface FileRoutesById {
   '/_authenticated/betty/': typeof AuthenticatedBettyIndexRoute
   '/_authenticated/monitoreos/': typeof AuthenticatedMonitoreosIndexRoute
   '/_authenticated/plantillas/': typeof AuthenticatedPlantillasIndexRoute
+  '/_authenticated/admin/users/import': typeof AuthenticatedAdminUsersImportRoute
   '/_authenticated/monitoreos/$id/editar': typeof AuthenticatedMonitoreosIdEditarRoute
 }
 export interface FileRouteTypes {
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
     | '/betty/'
     | '/monitoreos/'
     | '/plantillas/'
+    | '/admin/users/import'
     | '/monitoreos/$id/editar'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | '/betty'
     | '/monitoreos'
     | '/plantillas'
+    | '/admin/users/import'
     | '/monitoreos/$id/editar'
   id:
     | '__root__'
@@ -268,6 +280,7 @@ export interface FileRouteTypes {
     | '/_authenticated/betty/'
     | '/_authenticated/monitoreos/'
     | '/_authenticated/plantillas/'
+    | '/_authenticated/admin/users/import'
     | '/_authenticated/monitoreos/$id/editar'
   fileRoutesById: FileRoutesById
 }
@@ -414,6 +427,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlantillasTemplateIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/users/import': {
+      id: '/_authenticated/admin/users/import'
+      path: '/admin/users/import'
+      fullPath: '/admin/users/import'
+      preLoaderRoute: typeof AuthenticatedAdminUsersImportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/monitoreos/$id/editar': {
       id: '/_authenticated/monitoreos/$id/editar'
       path: '/editar'
@@ -463,6 +483,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBettyIndexRoute: typeof AuthenticatedBettyIndexRoute
   AuthenticatedMonitoreosIndexRoute: typeof AuthenticatedMonitoreosIndexRoute
   AuthenticatedPlantillasIndexRoute: typeof AuthenticatedPlantillasIndexRoute
+  AuthenticatedAdminUsersImportRoute: typeof AuthenticatedAdminUsersImportRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -480,6 +501,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBettyIndexRoute: AuthenticatedBettyIndexRoute,
   AuthenticatedMonitoreosIndexRoute: AuthenticatedMonitoreosIndexRoute,
   AuthenticatedPlantillasIndexRoute: AuthenticatedPlantillasIndexRoute,
+  AuthenticatedAdminUsersImportRoute: AuthenticatedAdminUsersImportRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

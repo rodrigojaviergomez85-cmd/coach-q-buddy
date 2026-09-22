@@ -1,0 +1,114 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
+const roleEnum = z.enum(["admin", "senior", "coordinador", "coach", "qa"]);
+
+const schema = z.object({
+  redirectTo: z.string().url().optional(),
+  rows: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1).max(120),
+        email: z.string().trim().email().max(255),
+        role: roleEnum,
+      }),
+    )
+    .min(1)
+    .max(500),
+});
+
+export type ImportUserStatus = "invited" | "exists" | "error";
+
+export interface ImportUserResult {
+  name: string;
+  email: string;
+  role: string;
+  status: ImportUserStatus;
+  message?: string;
+}
+
+export const importUsers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => schema.parse(input))
+  .handler(async ({ data, context }): Promise<{ results: ImportUserResult[] }> => {
+    const { data: me, error: meError } = await context.supabase
+      .from("profiles")
+      .select("role, active")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (meError || !me || !me.active || (me.role !== "admin" && me.role !== "senior")) {
+      throw new Error("No tienes permiso para importar usuarios.");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const results: ImportUserResult[] = [];
+
+    for (const row of data.rows) {
+      const email = row.email.toLowerCase();
+      try {
+        const { data: existing } = await supabaseAdmin
+          .from("profiles")
+          .select("id")
+          .ilike("email", email)
+          .maybeSingle();
+
+        if (existing) {
+          results.push({ ...row, email, status: "exists", message: "Ya existe" });
+          continue;
+        }
+
+        const { data: invited, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+          email,
+          {
+            data: { name: row.name, full_name: row.name, role: row.role },
+            ...(data.redirectTo ? { redirectTo: data.redirectTo } : {}),
+          },
+        );
+
+        let userId = invited?.user?.id ?? null;
+
+        if (inviteError) {
+          const alreadyRegistered = /already|registered|exists/i.test(inviteError.message);
+          if (!alreadyRegistered) {
+            results.push({ ...row, email, status: "error", message: inviteError.message });
+            continue;
+          }
+          const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+          userId = list?.users.find((u) => u.email?.toLowerCase() === email)?.id ?? null;
+        }
+
+        const { error: profileError } = await supabaseAdmin.from("profiles").upsert(
+          {
+            ...(userId ? { id: userId } : {}),
+            email,
+            full_name: row.name,
+            role: row.role,
+            active: true,
+          },
+          { onConflict: "email" },
+        );
+        if (profileError) {
+          results.push({ ...row, email, status: "error", message: profileError.message });
+          continue;
+        }
+
+        results.push({
+          ...row,
+          email,
+          status: inviteError ? "exists" : "invited",
+          message: inviteError ? "Ya existe en el acceso, perfil actualizado" : "Invitación enviada",
+        });
+      } catch (error) {
+        results.push({
+          ...row,
+          email,
+          status: "error",
+          message: error instanceof Error ? error.message : "Error desconocido",
+        });
+      }
+    }
+
+    return { results };
+  });
