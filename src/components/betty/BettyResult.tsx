@@ -343,6 +343,12 @@ export function BettyResult({ scanId }: { scanId: string }) {
         </section>
       ) : null}
 
+      {template?.has_student_grid ? (
+        <p className="rounded-xl border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+          La tabla de estudiantes se llena en el monitoreo oficial.
+        </p>
+      ) : null}
+
       <section className="space-y-4">
         {areas.map((group) => (
           <div key={group.area} className="space-y-3 rounded-xl border bg-card p-5">
@@ -356,6 +362,15 @@ export function BettyResult({ scanId }: { scanId: string }) {
                       <Badge className={resultBadge[row.ai_result ?? "nd"]} variant="secondary">
                         {resultLabel[row.ai_result ?? "nd"]}
                       </Badge>
+                      {(() => {
+                        const rule = matchAutoRule(row.item?.description ?? "");
+                        if (row.item?.ai_mode !== "auto" && !rule) return null;
+                        return (
+                          <Badge variant="outline" title={rule ? `Regla: ${rule.label}` : "Métrica automática"}>
+                            auto{rule ? ` · ${rule.label}` : ""}
+                          </Badge>
+                        );
+                      })()}
                       <Confidence level={row.ai_confidence} />
                       {row.coordinator_changed ? <Pencil className="size-3.5 text-muted-foreground" /> : null}
                     </div>
