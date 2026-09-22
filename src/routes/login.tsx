@@ -89,6 +89,25 @@ function LoginPage() {
     setMessage(t("code_sent"));
   }
 
+  async function signInPassword(e?: React.FormEvent) {
+    e?.preventDefault();
+    const clean = email.trim().toLowerCase();
+    if (!clean || !password) return;
+    setBusy(true);
+    setError(null);
+    setMessage(null);
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email: clean,
+      password,
+    });
+    if (signInError || !data.session) {
+      setBusy(false);
+      setError("Correo o contraseña incorrectos.");
+      return;
+    }
+    navigate({ to: "/coaches", replace: true });
+  }
+
   async function verify(value: string) {
     setBusy(true);
     setError(null);
