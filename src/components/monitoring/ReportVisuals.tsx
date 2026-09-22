@@ -47,7 +47,9 @@ export function TalkTimePie({ metrics }: { metrics: Metrics }) {
 
 export function StudentBars({ metrics, minimum }: { metrics: Metrics; minimum: number }) {
   const students = metrics.speakers.filter((s) => s.role === "alumno");
-  return <div className="space-y-3">{students.map((student) => { const low = student.pct_of_students < minimum; return <div key={student.key} className="grid grid-cols-[minmax(7rem,1fr)_2fr_auto] items-center gap-3 text-sm"><span className="truncate font-medium">{student.name}</span><div className="h-2.5 overflow-hidden rounded-full bg-muted"><div className={cn("h-full rounded-full", low ? "bg-destructive" : "bg-success")} style={{ width: `${Math.min(100, student.pct_of_students)}%` }} /></div><span className="flex items-center gap-1 tabular-nums">{student.min} min {low ? <AlertTriangle className="size-3 text-destructive" /> : null}</span></div>; })}</div>;
+  return <div className="space-y-3">{students.map((student) => { const low = student.pct_of_students < minimum; return <div key={student.key} className="grid grid-cols-[minmax(7rem,1fr)_2fr_auto] items-center gap-3 text-sm"><span className="truncate font-medium">{student.name}</span><div className="h-2.5 overflow-hidden rounded-full bg-muted"><div className={cn("h-full rounded-full", low ? "bg-destructive" : "bg-success")} style={{ width: `${Math.min(100, student.pct_of_students)}%` }} /></div><span className="flex items-center gap-1 whitespace-nowrap tabular-nums">{student.min} min · {student.pct_of_students} %{low ? <AlertTriangle className="size-3 text-destructive" /> : null}</span></div>; })}
+    <p className="pt-1 text-sm font-semibold">Top 3 alumnos: {metrics.top3_students_pct} % del tiempo de alumnos</p>
+  </div>;
 }
 
 export function BlocksChart({ blocks }: { blocks: BlockMetric[] }) {
