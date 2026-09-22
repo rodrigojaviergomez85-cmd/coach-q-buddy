@@ -16,7 +16,12 @@ import { Route as AuthenticatedAnalizadorRouteImport } from './routes/_authentic
 import { Route as AuthenticatedCoachesRouteImport } from './routes/_authenticated/coaches'
 import { Route as AuthenticatedConfiguracionRouteImport } from './routes/_authenticated/configuracion'
 import { Route as AuthenticatedMesRouteImport } from './routes/_authenticated/mes'
+import { Route as BTokenRouteImport } from './routes/b.$token'
 import { Route as RTokenRouteImport } from './routes/r.$token'
+import { Route as AuthenticatedBettyIndexRouteImport } from './routes/_authenticated/betty.index'
+import { Route as AuthenticatedBettyIdRouteImport } from './routes/_authenticated/betty.$id'
+import { Route as AuthenticatedBettyCalibracionRouteImport } from './routes/_authenticated/betty.calibracion'
+import { Route as AuthenticatedBettyNuevoRouteImport } from './routes/_authenticated/betty.nuevo'
 import { Route as AuthenticatedCoachesCoachIdRouteImport } from './routes/_authenticated/coaches.$coachId'
 import { Route as AuthenticatedMonitoreosIndexRouteImport } from './routes/_authenticated/monitoreos.index'
 import { Route as AuthenticatedMonitoreosIdRouteImport } from './routes/_authenticated/monitoreos.$id'
@@ -60,10 +65,36 @@ const AuthenticatedMesRoute = AuthenticatedMesRouteImport.update({
   path: '/mes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const BTokenRoute = BTokenRouteImport.update({
+  id: '/b/$token',
+  path: '/b/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RTokenRoute = RTokenRouteImport.update({
   id: '/r/$token',
   path: '/r/$token',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedBettyIndexRoute = AuthenticatedBettyIndexRouteImport.update({
+  id: '/betty/',
+  path: '/betty/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBettyIdRoute = AuthenticatedBettyIdRouteImport.update({
+  id: '/betty/$id',
+  path: '/betty/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBettyCalibracionRoute =
+  AuthenticatedBettyCalibracionRouteImport.update({
+    id: '/betty/calibracion',
+    path: '/betty/calibracion',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedBettyNuevoRoute = AuthenticatedBettyNuevoRouteImport.update({
+  id: '/betty/nuevo',
+  path: '/betty/nuevo',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCoachesCoachIdRoute =
   AuthenticatedCoachesCoachIdRouteImport.update({
@@ -115,11 +146,16 @@ export interface FileRoutesByFullPath {
   '/coaches': typeof AuthenticatedCoachesRouteWithChildren
   '/configuracion': typeof AuthenticatedConfiguracionRoute
   '/mes': typeof AuthenticatedMesRoute
+  '/b/$token': typeof BTokenRoute
   '/r/$token': typeof RTokenRoute
+  '/betty/$id': typeof AuthenticatedBettyIdRoute
+  '/betty/calibracion': typeof AuthenticatedBettyCalibracionRoute
+  '/betty/nuevo': typeof AuthenticatedBettyNuevoRoute
   '/coaches/$coachId': typeof AuthenticatedCoachesCoachIdRoute
   '/monitoreos/$id': typeof AuthenticatedMonitoreosIdRouteWithChildren
   '/monitoreos/nuevo': typeof AuthenticatedMonitoreosNuevoRoute
   '/plantillas/$templateId': typeof AuthenticatedPlantillasTemplateIdRoute
+  '/betty/': typeof AuthenticatedBettyIndexRoute
   '/monitoreos/': typeof AuthenticatedMonitoreosIndexRoute
   '/plantillas/': typeof AuthenticatedPlantillasIndexRoute
   '/monitoreos/$id/editar': typeof AuthenticatedMonitoreosIdEditarRoute
@@ -131,11 +167,16 @@ export interface FileRoutesByTo {
   '/coaches': typeof AuthenticatedCoachesRouteWithChildren
   '/configuracion': typeof AuthenticatedConfiguracionRoute
   '/mes': typeof AuthenticatedMesRoute
+  '/b/$token': typeof BTokenRoute
   '/r/$token': typeof RTokenRoute
+  '/betty/$id': typeof AuthenticatedBettyIdRoute
+  '/betty/calibracion': typeof AuthenticatedBettyCalibracionRoute
+  '/betty/nuevo': typeof AuthenticatedBettyNuevoRoute
   '/coaches/$coachId': typeof AuthenticatedCoachesCoachIdRoute
   '/monitoreos/$id': typeof AuthenticatedMonitoreosIdRouteWithChildren
   '/monitoreos/nuevo': typeof AuthenticatedMonitoreosNuevoRoute
   '/plantillas/$templateId': typeof AuthenticatedPlantillasTemplateIdRoute
+  '/betty': typeof AuthenticatedBettyIndexRoute
   '/monitoreos': typeof AuthenticatedMonitoreosIndexRoute
   '/plantillas': typeof AuthenticatedPlantillasIndexRoute
   '/monitoreos/$id/editar': typeof AuthenticatedMonitoreosIdEditarRoute
@@ -149,11 +190,16 @@ export interface FileRoutesById {
   '/_authenticated/coaches': typeof AuthenticatedCoachesRouteWithChildren
   '/_authenticated/configuracion': typeof AuthenticatedConfiguracionRoute
   '/_authenticated/mes': typeof AuthenticatedMesRoute
+  '/b/$token': typeof BTokenRoute
   '/r/$token': typeof RTokenRoute
+  '/_authenticated/betty/$id': typeof AuthenticatedBettyIdRoute
+  '/_authenticated/betty/calibracion': typeof AuthenticatedBettyCalibracionRoute
+  '/_authenticated/betty/nuevo': typeof AuthenticatedBettyNuevoRoute
   '/_authenticated/coaches/$coachId': typeof AuthenticatedCoachesCoachIdRoute
   '/_authenticated/monitoreos/$id': typeof AuthenticatedMonitoreosIdRouteWithChildren
   '/_authenticated/monitoreos/nuevo': typeof AuthenticatedMonitoreosNuevoRoute
   '/_authenticated/plantillas/$templateId': typeof AuthenticatedPlantillasTemplateIdRoute
+  '/_authenticated/betty/': typeof AuthenticatedBettyIndexRoute
   '/_authenticated/monitoreos/': typeof AuthenticatedMonitoreosIndexRoute
   '/_authenticated/plantillas/': typeof AuthenticatedPlantillasIndexRoute
   '/_authenticated/monitoreos/$id/editar': typeof AuthenticatedMonitoreosIdEditarRoute
@@ -167,11 +213,16 @@ export interface FileRouteTypes {
     | '/coaches'
     | '/configuracion'
     | '/mes'
+    | '/b/$token'
     | '/r/$token'
+    | '/betty/$id'
+    | '/betty/calibracion'
+    | '/betty/nuevo'
     | '/coaches/$coachId'
     | '/monitoreos/$id'
     | '/monitoreos/nuevo'
     | '/plantillas/$templateId'
+    | '/betty/'
     | '/monitoreos/'
     | '/plantillas/'
     | '/monitoreos/$id/editar'
@@ -183,11 +234,16 @@ export interface FileRouteTypes {
     | '/coaches'
     | '/configuracion'
     | '/mes'
+    | '/b/$token'
     | '/r/$token'
+    | '/betty/$id'
+    | '/betty/calibracion'
+    | '/betty/nuevo'
     | '/coaches/$coachId'
     | '/monitoreos/$id'
     | '/monitoreos/nuevo'
     | '/plantillas/$templateId'
+    | '/betty'
     | '/monitoreos'
     | '/plantillas'
     | '/monitoreos/$id/editar'
@@ -200,11 +256,16 @@ export interface FileRouteTypes {
     | '/_authenticated/coaches'
     | '/_authenticated/configuracion'
     | '/_authenticated/mes'
+    | '/b/$token'
     | '/r/$token'
+    | '/_authenticated/betty/$id'
+    | '/_authenticated/betty/calibracion'
+    | '/_authenticated/betty/nuevo'
     | '/_authenticated/coaches/$coachId'
     | '/_authenticated/monitoreos/$id'
     | '/_authenticated/monitoreos/nuevo'
     | '/_authenticated/plantillas/$templateId'
+    | '/_authenticated/betty/'
     | '/_authenticated/monitoreos/'
     | '/_authenticated/plantillas/'
     | '/_authenticated/monitoreos/$id/editar'
@@ -214,6 +275,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
+  BTokenRoute: typeof BTokenRoute
   RTokenRoute: typeof RTokenRoute
 }
 
@@ -268,12 +330,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/b/$token': {
+      id: '/b/$token'
+      path: '/b/$token'
+      fullPath: '/b/$token'
+      preLoaderRoute: typeof BTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/r/$token': {
       id: '/r/$token'
       path: '/r/$token'
       fullPath: '/r/$token'
       preLoaderRoute: typeof RTokenRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/betty/': {
+      id: '/_authenticated/betty/'
+      path: '/betty'
+      fullPath: '/betty/'
+      preLoaderRoute: typeof AuthenticatedBettyIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/betty/$id': {
+      id: '/_authenticated/betty/$id'
+      path: '/betty/$id'
+      fullPath: '/betty/$id'
+      preLoaderRoute: typeof AuthenticatedBettyIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/betty/calibracion': {
+      id: '/_authenticated/betty/calibracion'
+      path: '/betty/calibracion'
+      fullPath: '/betty/calibracion'
+      preLoaderRoute: typeof AuthenticatedBettyCalibracionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/betty/nuevo': {
+      id: '/_authenticated/betty/nuevo'
+      path: '/betty/nuevo'
+      fullPath: '/betty/nuevo'
+      preLoaderRoute: typeof AuthenticatedBettyNuevoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/coaches/$coachId': {
       id: '/_authenticated/coaches/$coachId'
@@ -357,9 +454,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCoachesRoute: typeof AuthenticatedCoachesRouteWithChildren
   AuthenticatedConfiguracionRoute: typeof AuthenticatedConfiguracionRoute
   AuthenticatedMesRoute: typeof AuthenticatedMesRoute
+  AuthenticatedBettyIdRoute: typeof AuthenticatedBettyIdRoute
+  AuthenticatedBettyCalibracionRoute: typeof AuthenticatedBettyCalibracionRoute
+  AuthenticatedBettyNuevoRoute: typeof AuthenticatedBettyNuevoRoute
   AuthenticatedMonitoreosIdRoute: typeof AuthenticatedMonitoreosIdRouteWithChildren
   AuthenticatedMonitoreosNuevoRoute: typeof AuthenticatedMonitoreosNuevoRoute
   AuthenticatedPlantillasTemplateIdRoute: typeof AuthenticatedPlantillasTemplateIdRoute
+  AuthenticatedBettyIndexRoute: typeof AuthenticatedBettyIndexRoute
   AuthenticatedMonitoreosIndexRoute: typeof AuthenticatedMonitoreosIndexRoute
   AuthenticatedPlantillasIndexRoute: typeof AuthenticatedPlantillasIndexRoute
 }
@@ -369,10 +470,14 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCoachesRoute: AuthenticatedCoachesRouteWithChildren,
   AuthenticatedConfiguracionRoute: AuthenticatedConfiguracionRoute,
   AuthenticatedMesRoute: AuthenticatedMesRoute,
+  AuthenticatedBettyIdRoute: AuthenticatedBettyIdRoute,
+  AuthenticatedBettyCalibracionRoute: AuthenticatedBettyCalibracionRoute,
+  AuthenticatedBettyNuevoRoute: AuthenticatedBettyNuevoRoute,
   AuthenticatedMonitoreosIdRoute: AuthenticatedMonitoreosIdRouteWithChildren,
   AuthenticatedMonitoreosNuevoRoute: AuthenticatedMonitoreosNuevoRoute,
   AuthenticatedPlantillasTemplateIdRoute:
     AuthenticatedPlantillasTemplateIdRoute,
+  AuthenticatedBettyIndexRoute: AuthenticatedBettyIndexRoute,
   AuthenticatedMonitoreosIndexRoute: AuthenticatedMonitoreosIndexRoute,
   AuthenticatedPlantillasIndexRoute: AuthenticatedPlantillasIndexRoute,
 }
@@ -384,6 +489,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   LoginRoute: LoginRoute,
+  BTokenRoute: BTokenRoute,
   RTokenRoute: RTokenRoute,
 }
 export const routeTree = rootRouteImport

@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { monthStartSV } from "@/lib/date";
 import { useProfile } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 
@@ -139,6 +140,8 @@ function SettingsPage() {
   return (
     <>
       <PageHeader title={t("settings_title")} />
+
+      <BettyUsage />
 
       <section className="mb-8 rounded-xl border bg-card p-5 shadow-panel">
         <h2 className="mb-4 text-sm font-semibold">{t("settings_params")}</h2>
@@ -369,5 +372,31 @@ function PendingPeople() {
         )}
       </section>
     </>
+  );
+}
+
+function BettyUsage() {
+  const { data } = useQuery({
+    queryKey: ["betty-usage"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("betty_scans")
+        .select("tokens_in, tokens_out")
+        .gte("created_at", `${monthStartSV()}T00:00:00`);
+      if (error) throw error;
+      const rows = data ?? [];
+      return {
+        count: rows.length,
+        tokens: rows.reduce((sum, r) => sum + Number(r.tokens_in ?? 0) + Number(r.tokens_out ?? 0), 0),
+      };
+    },
+  });
+  return (
+    <section className="mb-8 rounded-xl border bg-card p-5 shadow-panel">
+      <h2 className="mb-2 text-sm font-semibold">Coach Betty Well</h2>
+      <p className="text-sm text-muted-foreground">
+        Análisis este mes: <strong>{data?.count ?? 0}</strong> · tokens: <strong>{data?.tokens ?? 0}</strong>
+      </p>
+    </section>
   );
 }

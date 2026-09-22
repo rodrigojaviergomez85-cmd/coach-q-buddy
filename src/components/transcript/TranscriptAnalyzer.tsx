@@ -81,7 +81,11 @@ function lightClass(light: Metrics["traffic_light"]): string {
 export function TranscriptAnalyzer({
   onMetrics,
 }: {
-  onMetrics?: (metrics: Metrics, rawText: string) => void;
+  onMetrics?: (
+    metrics: Metrics,
+    rawText: string,
+    context?: { segments: Segment[]; roles: SpeakerRole[] },
+  ) => void;
 }) {
   const config = useTranscriptConfig();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -130,7 +134,7 @@ export function TranscriptAnalyzer({
   function analyze() {
     const result = computeMetrics(segments, roles, config);
     setMetrics(result);
-    onMetrics?.(result, raw);
+    onMetrics?.(result, raw, { segments, roles });
   }
 
   // Cuando el componente se usa dentro del monitoreo, el análisis se envía solo
@@ -139,7 +143,7 @@ export function TranscriptAnalyzer({
     if (!onMetrics || segments.length === 0 || roles.length === 0) return;
     const result = computeMetrics(segments, roles, config);
     setMetrics(result);
-    onMetrics(result, raw);
+    onMetrics(result, raw, { segments, roles });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [segments, roles, config]);
 
