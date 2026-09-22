@@ -41,6 +41,8 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"email" | "code">("email");
+  const [usePassword, setUsePassword] = useState(false);
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -85,6 +87,25 @@ function LoginPage() {
     }
     setStep("code");
     setMessage(t("code_sent"));
+  }
+
+  async function signInPassword(e?: React.FormEvent) {
+    e?.preventDefault();
+    const clean = email.trim().toLowerCase();
+    if (!clean || !password) return;
+    setBusy(true);
+    setError(null);
+    setMessage(null);
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email: clean,
+      password,
+    });
+    if (signInError || !data.session) {
+      setBusy(false);
+      setError("Correo o contraseña incorrectos.");
+      return;
+    }
+    navigate({ to: "/coaches", replace: true });
   }
 
   async function verify(value: string) {
@@ -136,7 +157,10 @@ function LoginPage() {
           <p className="mt-1 text-sm text-muted-foreground">{t("login_subtitle")}</p>
 
           {step === "email" ? (
-            <form className="mt-6 space-y-4" onSubmit={sendCode}>
+            <form
+              className="mt-6 space-y-4"
+              onSubmit={usePassword ? signInPassword : sendCode}
+            >
               <div className="space-y-2">
                 <Label htmlFor="email">{t("email")}</Label>
                 <Input
@@ -149,10 +173,34 @@ function LoginPage() {
                   placeholder="nombre@english4kids.com"
                 />
               </div>
+              {usePassword ? (
+                <div className="space-y-2">
+                  <Label htmlFor="password">Contraseña</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+              ) : null}
               <Button type="submit" className="w-full" disabled={busy}>
                 {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-                {busy ? t("sending") : t("send_code")}
+                {busy ? t("sending") : usePassword ? t("enter") : t("send_code")}
               </Button>
+              <button
+                type="button"
+                className="w-full text-center text-sm text-muted-foreground underline-offset-4 hover:underline"
+                onClick={() => {
+                  setUsePassword((v) => !v);
+                  setError(null);
+                  setMessage(null);
+                }}
+              >
+                {usePassword ? "Entrar con código por correo" : "Entrar con contraseña"}
+              </button>
             </form>
           ) : (
             <div className="mt-6 space-y-4">

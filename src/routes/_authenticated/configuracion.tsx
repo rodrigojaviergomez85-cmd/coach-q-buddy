@@ -141,6 +141,7 @@ function SettingsPage() {
     <>
       <PageHeader title={t("settings_title")} />
 
+      <MyPassword />
       <BettyUsage />
 
       <section className="mb-8 rounded-xl border bg-card p-5 shadow-panel">
@@ -372,6 +373,49 @@ function PendingPeople() {
         )}
       </section>
     </>
+  );
+}
+
+function MyPassword() {
+  const [pwd, setPwd] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function save() {
+    if (pwd.trim().length < 8) {
+      toast.error("La contraseña debe tener al menos 8 caracteres");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.auth.updateUser({ password: pwd.trim() });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setPwd("");
+    toast.success("Contraseña guardada. Ya puedes entrar con correo y contraseña.");
+  }
+
+  return (
+    <section className="mb-8 rounded-xl border bg-card p-5 shadow-panel">
+      <h2 className="mb-2 text-sm font-semibold">Mi contraseña</h2>
+      <p className="mb-3 text-sm text-muted-foreground">
+        Define una contraseña para entrar siempre sin esperar el código por correo.
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <Input
+          type="password"
+          value={pwd}
+          autoComplete="new-password"
+          placeholder="Nueva contraseña"
+          className="max-w-xs"
+          onChange={(e) => setPwd(e.target.value)}
+        />
+        <Button variant="outline" disabled={busy} onClick={() => void save()}>
+          Guardar contraseña
+        </Button>
+      </div>
+    </section>
   );
 }
 
