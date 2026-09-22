@@ -91,6 +91,28 @@ describe("expansión", () => {
     expect(det.expansion.students).toBe(1);
     expect(det.expansion.coach_push_count).toBe(1);
   });
+
+  it("cuenta 'why' en cualquier posición como empuje", () => {
+    const det = build([
+      seg("Coach Pame", 0, 5, "Why is Rose playing video games?"),
+      seg("Coach Pame", 10, 15, "Tell me more about that"),
+      seg("Coach Pame", 20, 25, "Open your books"),
+      seg("Ana", 30, 35, "Because it is fun"),
+    ]);
+    expect(det.expansion.coach_push_count).toBe(2);
+  });
+});
+
+describe("follow-up questions", () => {
+  it("detecta preguntas con patrones en cualquier posición antes del AF", () => {
+    const det = build([
+      seg("Coach Pame", 0, 5, "What movies do you like?"),
+      seg("Coach Pame", 10, 15, "And you? How was your weekend?"),
+      seg("Coach Pame", 20, 25, "Open your books to page five"),
+      seg("Ana", 30, 35, "I like action movies"),
+    ]);
+    expect(det.follow_up_questions).toBe(2);
+  });
 });
 
 describe("ítems automáticos", () => {
