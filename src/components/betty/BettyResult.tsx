@@ -14,10 +14,11 @@ import { formatDateSV } from "@/lib/date";
 import { round2 } from "@/lib/scoring";
 import { zoomMarkerUrl } from "@/lib/monitoring";
 import type { BettyDeterministic, Quote } from "@/lib/betty-metrics";
+import { computeReview, earnedPoints, mapAiResult, type ReviewResult } from "@/lib/betty-review";
 import type { Metrics } from "@/lib/transcript";
 import { cn } from "@/lib/utils";
 
-type FinalResult = "si" | "no" | "na" | "";
+type FinalResult = ReviewResult;
 
 interface AnswerRow {
   id: string;
