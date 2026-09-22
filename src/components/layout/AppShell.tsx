@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 
+import bettyAvatar from "@/assets/coach-betty.png.asset.json";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { signOutCleanly, useProfile } from "@/lib/auth";
@@ -32,7 +33,7 @@ export function AppShell() {
     { to: "/coaches", label: "Mis coaches", icon: Users },
     { to: "/monitoreos", label: t("nav_monitorings"), icon: ClipboardList },
     { to: "/analizador", label: "Analizador", icon: BarChart3 },
-    { to: "/betty", label: "Coach Betty Well", icon: Sparkles },
+    { to: "/betty", label: "Coach Betty Well", icon: Sparkles, img: bettyAvatar.url },
     { to: "/plantillas", label: t("nav_templates"), icon: GraduationCap },
     ...(isAdmin ? [{ to: "/configuracion", label: t("nav_settings"), icon: Settings }] : []),
   ] as const;
