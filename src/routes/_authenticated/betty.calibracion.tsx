@@ -55,7 +55,7 @@ interface TemplateGroup {
 function Calibracion() {
   const { profile } = useProfile();
   const allowed = profile.role === "admin" || profile.role === "senior";
-  const isAdmin = profile.role === "admin";
+  const isAdmin = allowed;
   const [editing, setEditing] = useState<ItemRow | null>(null);
   const [mode, setMode] = useState("manual");
   const [instructions, setInstructions] = useState("");
