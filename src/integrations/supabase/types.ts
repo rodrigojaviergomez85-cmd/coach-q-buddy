@@ -32,6 +32,191 @@ export type Database = {
         }
         Relationships: []
       }
+      betty_scan_answers: {
+        Row: {
+          ai_confidence: string | null
+          ai_evidence: Json
+          ai_note: string | null
+          ai_result: string | null
+          ai_score: number | null
+          comment: string | null
+          coordinator_changed: boolean
+          created_at: string
+          final_result: string | null
+          final_score: number | null
+          id: string
+          item_id: string
+          scan_id: string
+        }
+        Insert: {
+          ai_confidence?: string | null
+          ai_evidence?: Json
+          ai_note?: string | null
+          ai_result?: string | null
+          ai_score?: number | null
+          comment?: string | null
+          coordinator_changed?: boolean
+          created_at?: string
+          final_result?: string | null
+          final_score?: number | null
+          id?: string
+          item_id: string
+          scan_id: string
+        }
+        Update: {
+          ai_confidence?: string | null
+          ai_evidence?: Json
+          ai_note?: string | null
+          ai_result?: string | null
+          ai_score?: number | null
+          comment?: string | null
+          coordinator_changed?: boolean
+          created_at?: string
+          final_result?: string | null
+          final_score?: number | null
+          id?: string
+          item_id?: string
+          scan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "betty_scan_answers_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "template_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "betty_scan_answers_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "betty_scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      betty_scans: {
+        Row: {
+          ai_aois: Json
+          ai_kudos: Json
+          ai_output: Json | null
+          ai_summary: string | null
+          ai_watch_minutes: Json
+          betty_phrase: string | null
+          betty_score: number | null
+          class_date: string | null
+          class_timeline: Json | null
+          coach_id: string
+          converted_monitoring_id: string | null
+          coordinator_id: string
+          created_at: string
+          deterministic: Json | null
+          id: string
+          level: string | null
+          lob: string | null
+          model: string | null
+          share_token: string | null
+          status: string
+          template_id: string
+          tokens_in: number | null
+          tokens_out: number | null
+          transcript_hash: string | null
+          transcript_metrics: Json | null
+          transcript_raw: string | null
+          updated_at: string
+          zoom_link: string | null
+        }
+        Insert: {
+          ai_aois?: Json
+          ai_kudos?: Json
+          ai_output?: Json | null
+          ai_summary?: string | null
+          ai_watch_minutes?: Json
+          betty_phrase?: string | null
+          betty_score?: number | null
+          class_date?: string | null
+          class_timeline?: Json | null
+          coach_id: string
+          converted_monitoring_id?: string | null
+          coordinator_id: string
+          created_at?: string
+          deterministic?: Json | null
+          id?: string
+          level?: string | null
+          lob?: string | null
+          model?: string | null
+          share_token?: string | null
+          status?: string
+          template_id: string
+          tokens_in?: number | null
+          tokens_out?: number | null
+          transcript_hash?: string | null
+          transcript_metrics?: Json | null
+          transcript_raw?: string | null
+          updated_at?: string
+          zoom_link?: string | null
+        }
+        Update: {
+          ai_aois?: Json
+          ai_kudos?: Json
+          ai_output?: Json | null
+          ai_summary?: string | null
+          ai_watch_minutes?: Json
+          betty_phrase?: string | null
+          betty_score?: number | null
+          class_date?: string | null
+          class_timeline?: Json | null
+          coach_id?: string
+          converted_monitoring_id?: string | null
+          coordinator_id?: string
+          created_at?: string
+          deterministic?: Json | null
+          id?: string
+          level?: string | null
+          lob?: string | null
+          model?: string | null
+          share_token?: string | null
+          status?: string
+          template_id?: string
+          tokens_in?: number | null
+          tokens_out?: number | null
+          transcript_hash?: string | null
+          transcript_metrics?: Json | null
+          transcript_raw?: string | null
+          updated_at?: string
+          zoom_link?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "betty_scans_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "coaches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "betty_scans_converted_monitoring_id_fkey"
+            columns: ["converted_monitoring_id"]
+            isOneToOne: false
+            referencedRelation: "monitorings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "betty_scans_coordinator_id_fkey"
+            columns: ["coordinator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "betty_scans_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coaches: {
         Row: {
           active: boolean
@@ -372,6 +557,8 @@ export type Database = {
       }
       template_items: {
         Row: {
+          ai_instructions: string | null
+          ai_mode: string
           area: string | null
           area_points: number | null
           description: string
@@ -387,6 +574,8 @@ export type Database = {
           template_id: string | null
         }
         Insert: {
+          ai_instructions?: string | null
+          ai_mode?: string
           area?: string | null
           area_points?: number | null
           description: string
@@ -402,6 +591,8 @@ export type Database = {
           template_id?: string | null
         }
         Update: {
+          ai_instructions?: string | null
+          ai_mode?: string
           area?: string | null
           area_points?: number | null
           description?: string
@@ -471,10 +662,12 @@ export type Database = {
     }
     Functions: {
       app_current_role: { Args: never; Returns: string }
+      can_read_betty: { Args: { _id: string }; Returns: boolean }
       can_read_monitoring: { Args: { _id: string }; Returns: boolean }
       can_write_monitoring: { Args: { _id: string }; Returns: boolean }
       current_role: { Args: never; Returns: string }
       email_is_authorized: { Args: { _email: string }; Returns: boolean }
+      get_betty_by_token: { Args: { _token: string }; Returns: Json }
       get_report_by_token: { Args: { _token: string }; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
       is_senior_or_admin: { Args: never; Returns: boolean }
