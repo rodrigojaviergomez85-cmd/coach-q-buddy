@@ -21,7 +21,7 @@ const schema = z.object({
     .max(500),
 });
 
-export type ImportUserStatus = "invited" | "exists" | "error";
+export type ImportUserStatus = "created" | "exists" | "error";
 
 export interface ImportUserResult {
   name: string;
@@ -29,6 +29,17 @@ export interface ImportUserResult {
   role: string;
   status: ImportUserStatus;
   message?: string;
+  tempPassword?: string;
+}
+
+function generateTempPassword(): string {
+  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ", lower = "abcdefghijkmnpqrstuvwxyz", digits = "23456789", sym = "!@#$%*?";
+  const all = upper + lower + digits + sym;
+  const rnd = (n: number) => { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0]! % n; };
+  const chars = [upper, lower, digits, sym].map((set) => set[rnd(set.length)]!);
+  while (chars.length < 12) chars.push(all[rnd(all.length)]!);
+  for (let i = chars.length - 1; i > 0; i--) { const j = rnd(i + 1); [chars[i], chars[j]] = [chars[j]!, chars[i]!]; }
+  return chars.join("");
 }
 
 export const importUsers = createServerFn({ method: "POST" })
@@ -75,25 +86,24 @@ export const importUsers = createServerFn({ method: "POST" })
           continue;
         }
 
-        const { data: invited, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+        const tempPassword = generateTempPassword();
+        const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
           email,
-          {
-            data: { name: row.name, full_name: row.name, role: row.role },
-            ...(data.redirectTo ? { redirectTo: data.redirectTo } : {}),
-          },
-        );
-
-        let userId = invited?.user?.id ?? null;
-
-        if (inviteError) {
-          const alreadyRegistered = /already|registered|exists/i.test(inviteError.message);
-          if (!alreadyRegistered) {
-            results.push({ ...row, email, status: "error", message: inviteError.message });
-            continue;
-          }
-          const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-          userId = list?.users.find((u) => u.email?.toLowerCase() === email)?.id ?? null;
+          password: tempPassword,
+          email_confirm: true,
+          user_metadata: { name: row.name, full_name: row.name, role: row.role, team: row.team ?? null },
+        });
+        if (createError || !created?.user) {
+          const msg = createError?.message ?? "No se pudo crear";
+          results.push({
+            ...row,
+            email,
+            status: /already|registered|exists/i.test(msg) ? "exists" : "error",
+            message: /already|registered|exists/i.test(msg) ? "Email already exists" : msg,
+          });
+          continue;
         }
+        const userId = created.user.id;
 
         const { error: profileError } = await supabaseAdmin.from("profiles").upsert(
           {
@@ -132,8 +142,9 @@ export const importUsers = createServerFn({ method: "POST" })
         results.push({
           ...row,
           email,
-          status: inviteError ? "exists" : "invited",
-          message: inviteError ? "Ya existe en el acceso, perfil actualizado" : "Invitación enviada",
+          status: "created",
+          message: "Created",
+          tempPassword,
         });
       } catch (error) {
         results.push({
