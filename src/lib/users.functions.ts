@@ -2,159 +2,104 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-
-const roleEnum = z.enum(["admin", "senior", "coordinador", "coach", "qa"]);
+import { normalizeName } from "@/lib/coach-import";
 
 const schema = z.object({
-  redirectTo: z.string().url().optional(),
   rows: z
     .array(
       z.object({
-        name: z.string().trim().min(1).max(120),
-        email: z.string().trim().email().max(255),
-        role: roleEnum,
-        team: z.string().trim().max(200).optional(),
-        coordinator_email: z.string().trim().email().max(255).optional(),
+        name: z.string().trim().min(1).max(200),
+        role: z.literal("coach"),
+        coordinator: z.string().trim().min(1).max(200),
       }),
     )
     .min(1)
-    .max(500),
+    .max(2000),
 });
 
-export type ImportUserStatus = "created" | "exists" | "error";
+export type ImportCoachStatus = "created" | "updated" | "error";
 
-export interface ImportUserResult {
+export interface ImportCoachResult {
   name: string;
-  email: string;
   role: string;
-  status: ImportUserStatus;
+  coordinator: string;
+  status: ImportCoachStatus;
   message?: string;
-  tempPassword?: string;
 }
 
-function generateTempPassword(): string {
-  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ", lower = "abcdefghijkmnpqrstuvwxyz", digits = "23456789", sym = "!@#$%*?";
-  const all = upper + lower + digits + sym;
-  const rnd = (n: number) => { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0]! % n; };
-  const chars = [upper, lower, digits, sym].map((set) => set[rnd(set.length)]!);
-  while (chars.length < 12) chars.push(all[rnd(all.length)]!);
-  for (let i = chars.length - 1; i > 0; i--) { const j = rnd(i + 1); [chars[i], chars[j]] = [chars[j]!, chars[i]!]; }
-  return chars.join("");
-}
-
-export const importUsers = createServerFn({ method: "POST" })
+export const importCoachesByName = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => schema.parse(input))
-  .handler(async ({ data, context }): Promise<{ results: ImportUserResult[] }> => {
-    const { data: me, error: meError } = await context.supabase
+  .handler(async ({ data, context }): Promise<{ results: ImportCoachResult[] }> => {
+    const { data: me } = await context.supabase
       .from("profiles")
       .select("role, active")
       .eq("id", context.userId)
       .maybeSingle();
-    if (meError || !me || !me.active || (me.role !== "admin" && me.role !== "senior")) {
-      throw new Error("No tienes permiso para importar usuarios.");
+    if (!me || !me.active || (me.role !== "admin" && me.role !== "senior")) {
+      throw new Error("No tienes permiso para importar coaches.");
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const results: ImportUserResult[] = [];
+    const { data: profiles, error: pErr } = await supabaseAdmin.from("profiles").select("id, full_name, role");
+    if (pErr) throw new Error(pErr.message);
+    const { data: coaches } = await supabaseAdmin.from("coaches").select("id, full_name");
 
+    const coordByName = new Map<string, string>();
+    const coachProfileByName = new Map<string, string>();
+    for (const p of profiles ?? []) {
+      const key = normalizeName(p.full_name);
+      if (!key) continue;
+      if (["coordinador", "coordinator", "senior", "admin"].includes(p.role)) coordByName.set(key, p.id);
+      else if (p.role === "coach") coachProfileByName.set(key, p.id);
+    }
+    const coachRowByName = new Map<string, string>();
+    for (const c of coaches ?? []) coachRowByName.set(normalizeName(c.full_name), c.id);
+
+    const results: ImportCoachResult[] = [];
     for (const row of data.rows) {
-      const email = row.email.toLowerCase();
       try {
-        let coordinatorId: string | null = null;
-        if (row.coordinator_email) {
-          const { data: coord } = await supabaseAdmin
+        const coordinatorId = coordByName.get(normalizeName(row.coordinator));
+        if (!coordinatorId) {
+          results.push({ ...row, status: "error", message: `Coordinator not found: ${row.coordinator}` });
+          continue;
+        }
+        const key = normalizeName(row.name);
+        let coachId = coachProfileByName.get(key);
+        const isNew = !coachId;
+        if (coachId) {
+          const { error } = await supabaseAdmin.from("profiles").update({ full_name: row.name, role: "coach", active: true }).eq("id", coachId);
+          if (error) throw new Error(error.message);
+        } else {
+          const { data: created, error } = await supabaseAdmin
             .from("profiles")
+            .insert({ full_name: row.name, role: "coach", active: true, email: null })
             .select("id")
-            .ilike("email", row.coordinator_email.toLowerCase())
-            .maybeSingle();
-          if (!coord) {
-            results.push({ ...row, email, status: "error", message: `Coordinador no encontrado: ${row.coordinator_email}` });
-            continue;
-          }
-          coordinatorId = coord.id;
+            .single();
+          if (error) throw new Error(error.message);
+          coachId = created.id;
+          coachProfileByName.set(key, coachId);
         }
 
-        const { data: existing } = await supabaseAdmin
-          .from("profiles")
-          .select("id")
-          .ilike("email", email)
-          .maybeSingle();
+        await supabaseAdmin.from("coach_assignments").delete().eq("coach_id", coachId).neq("coordinator_id", coordinatorId);
+        const { error: aErr } = await supabaseAdmin
+          .from("coach_assignments")
+          .upsert({ coordinator_id: coordinatorId, coach_id: coachId }, { onConflict: "coordinator_id,coach_id" });
+        if (aErr) throw new Error(aErr.message);
 
-        if (existing) {
-          results.push({ ...row, email, status: "exists", message: "Ya existe" });
-          continue;
+        // Mantener el catálogo de coaches sincronizado para que el coordinador vea al coach.
+        const existingCoach = coachRowByName.get(key);
+        const coachRow = { full_name: row.name, coordinator_id: coordinatorId, coordinator_name: row.coordinator };
+        if (existingCoach) await supabaseAdmin.from("coaches").update(coachRow).eq("id", existingCoach);
+        else {
+          const { data: c } = await supabaseAdmin.from("coaches").insert({ ...coachRow, active: true }).select("id").single();
+          if (c) coachRowByName.set(key, c.id);
         }
 
-        const tempPassword = generateTempPassword();
-        const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
-          email,
-          password: tempPassword,
-          email_confirm: true,
-          user_metadata: { name: row.name, full_name: row.name, role: row.role, team: row.team ?? null },
-        });
-        if (createError || !created?.user) {
-          const msg = createError?.message ?? "No se pudo crear";
-          results.push({
-            ...row,
-            email,
-            status: /already|registered|exists/i.test(msg) ? "exists" : "error",
-            message: /already|registered|exists/i.test(msg) ? "Email already exists" : msg,
-          });
-          continue;
-        }
-        const userId = created.user.id;
-
-        const { error: profileError } = await supabaseAdmin.from("profiles").upsert(
-          {
-            ...(userId ? { id: userId } : {}),
-            email,
-            full_name: row.name,
-            role: row.role,
-            active: true,
-            ...(row.team ? { team: row.team } : {}),
-          },
-          { onConflict: "email" },
-        );
-        if (profileError) {
-          results.push({ ...row, email, status: "error", message: profileError.message });
-          continue;
-        }
-
-        if (row.role === "coach") {
-          const { data: prof } = await supabaseAdmin.from("profiles").select("id").ilike("email", email).maybeSingle();
-          if (coordinatorId && prof) {
-            await supabaseAdmin
-              .from("coach_assignments")
-              .upsert({ coordinator_id: coordinatorId, coach_id: prof.id }, { onConflict: "coordinator_id,coach_id" });
-          }
-          const { data: existingCoach } = await supabaseAdmin.from("coaches").select("id").ilike("email", email).maybeSingle();
-          const coachRow = {
-            full_name: row.name,
-            email,
-            senior_name: row.team ?? null,
-            ...(coordinatorId ? { coordinator_id: coordinatorId } : {}),
-          };
-          if (existingCoach) await supabaseAdmin.from("coaches").update(coachRow).eq("id", existingCoach.id);
-          else await supabaseAdmin.from("coaches").insert({ ...coachRow, active: true });
-        }
-
-        results.push({
-          ...row,
-          email,
-          status: "created",
-          message: "Created",
-          tempPassword,
-        });
+        results.push({ ...row, status: isNew ? "created" : "updated", message: isNew ? "Created" : "Updated" });
       } catch (error) {
-        results.push({
-          ...row,
-          email,
-          status: "error",
-          message: error instanceof Error ? error.message : "Error desconocido",
-        });
+        results.push({ ...row, status: "error", message: error instanceof Error ? error.message : "Error desconocido" });
       }
     }
-
     return { results };
   });
