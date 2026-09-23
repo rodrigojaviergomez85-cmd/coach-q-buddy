@@ -148,3 +148,26 @@ describe("frases", () => {
     expect(expectationFor(6, config.expectation_phrases)).toBe("Below expectations");
   });
 });
+
+import { mthBonus, mthFinalScore } from "./scoring";
+
+describe("M-TH 2026 (Excel)", () => {
+  const pts = [0.5, 1, 1, 0.5, 0.5, 1, 1, 1, 1, 1, 1, 0.5];
+  const items: ScoringItem[] = pts.map((p, i) => ({ id: `i${i}`, kind: "item", points: p }));
+  it("total de puntos es 10", () => expect(pts.reduce((a, b) => a + b, 0)).toBe(10));
+  it("base con un No de 1 pt = 9 y bonus Yes → 10", () => {
+    const base = computeBaseScore({ scoring: "points_sum" }, items, [{ item_id: "i1", result: "no" }]);
+    expect(base).toBe(9);
+    expect(mthFinalScore(base, mthBonus(false, true), false)).toBe(10);
+  });
+  it("bonus no acumula: dos Yes = 1, EPIC AF = 2", () => {
+    expect(mthBonus(false, true)).toBe(1);
+    expect(mthBonus(true, true)).toBe(2);
+    expect(mthBonus(false, false)).toBe(0);
+  });
+  it("Auto 5: 5 + bonus", () => {
+    expect(mthFinalScore(9, 0, true)).toBe(5);
+    expect(mthFinalScore(9, 2, true)).toBe(7);
+    expect(mthFinalScore(7.5, 2, false)).toBe(9.5);
+  });
+});

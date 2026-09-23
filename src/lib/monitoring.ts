@@ -25,6 +25,7 @@ export interface MonitoringAnswer {
   result: AnswerValue;
   comment: string;
   evidence_time: number | null;
+  score?: number | null;
 }
 
 export interface StudentDraft {
