@@ -75,25 +75,24 @@ export const importUsers = createServerFn({ method: "POST" })
           continue;
         }
 
-        const { data: invited, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+        const tempPassword = generateTempPassword();
+        const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
           email,
-          {
-            data: { name: row.name, full_name: row.name, role: row.role },
-            ...(data.redirectTo ? { redirectTo: data.redirectTo } : {}),
-          },
-        );
-
-        let userId = invited?.user?.id ?? null;
-
-        if (inviteError) {
-          const alreadyRegistered = /already|registered|exists/i.test(inviteError.message);
-          if (!alreadyRegistered) {
-            results.push({ ...row, email, status: "error", message: inviteError.message });
-            continue;
-          }
-          const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-          userId = list?.users.find((u) => u.email?.toLowerCase() === email)?.id ?? null;
+          password: tempPassword,
+          email_confirm: true,
+          user_metadata: { name: row.name, full_name: row.name, role: row.role, team: row.team ?? null },
+        });
+        if (createError || !created?.user) {
+          const msg = createError?.message ?? "No se pudo crear";
+          results.push({
+            ...row,
+            email,
+            status: /already|registered|exists/i.test(msg) ? "exists" : "error",
+            message: /already|registered|exists/i.test(msg) ? "Email already exists" : msg,
+          });
+          continue;
         }
+        const userId = created.user.id;
 
         const { error: profileError } = await supabaseAdmin.from("profiles").upsert(
           {
