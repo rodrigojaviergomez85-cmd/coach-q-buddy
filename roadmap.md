@@ -5,3 +5,4 @@
 - [ ] Construir reporte interno y público imprimible.
 - [ ] Actualizar lista de monitoreos, filtros y acciones.
 - [ ] Agregar componentes visuales reutilizables y pruebas.
+- [ ] Coach CSV import by name,role,coordinator (no email, match coordinator by name)
