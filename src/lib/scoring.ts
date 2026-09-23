@@ -134,3 +134,16 @@ export function phraseFor(score: number, rules: PhraseRule[] | undefined): strin
 export function expectationFor(score: number, rules: PhraseRule[] | undefined): string {
   return matchPhrase(score, rules);
 }
+
+/**
+ * Regla M-TH 2026 (Excel QA_Forms_2026_2 · M-TH):
+ * bonus = 2 si hay EPIC AF, 1 si hay algún bonus "Yes", 0 si no (no acumulativo).
+ * final = MIN(Auto 5 ? 5 + bonus : base + bonus, 10).
+ */
+export function mthBonus(hasEpic: boolean, anyYes: boolean): number {
+  return hasEpic ? 2 : anyYes ? 1 : 0;
+}
+
+export function mthFinalScore(base: number, bonus: number, penalty: boolean): number {
+  return round2(Math.min(penalty ? 5 + bonus : base + bonus, 10));
+}
