@@ -217,6 +217,42 @@ export type Database = {
           },
         ]
       }
+      coach_assignments: {
+        Row: {
+          coach_id: string
+          coordinator_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          coach_id: string
+          coordinator_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          coach_id?: string
+          coordinator_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_assignments_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_assignments_coordinator_id_fkey"
+            columns: ["coordinator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coaches: {
         Row: {
           active: boolean

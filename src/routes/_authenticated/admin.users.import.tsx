@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { Download, Upload, Users } from "lucide-react";
 import { toast } from "sonner";
@@ -56,6 +57,15 @@ function ImportUsersPage() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [parsed, setParsed] = useState<UserImportParseResult | null>(null);
   const [results, setResults] = useState<ImportUserResult[] | null>(null);
+  const { data: knownEmails } = useQuery({
+    queryKey: ["profiles", "emails"],
+    enabled: isAdmin,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("email");
+      if (error) throw error;
+      return new Set((data ?? []).map((p) => p.email.toLowerCase()));
+    },
+  });
 
   const mutation = useMutation({
     mutationFn: async (rows: ParsedUserRow[]) =>
@@ -120,7 +130,7 @@ function ImportUsersPage() {
             }}
           />
           <p className="text-xs text-muted-foreground">
-            Columnas esperadas: <code>name,email,role</code>. Roles válidos: admin, senior, coordinator, coach, qa.
+            Columnas esperadas: <code>name,email,role,team,coordinator_email</code> (team y coordinator_email opcionales). Roles válidos: admin, senior, coordinator, coach, qa.
           </p>
           {fileName ? <p className="text-xs text-muted-foreground">Archivo: {fileName}</p> : null}
         </CardContent>
@@ -154,6 +164,8 @@ function ImportUsersPage() {
                     <th className="py-2">Nombre</th>
                     <th className="py-2">Email</th>
                     <th className="py-2">Rol</th>
+                    <th className="py-2">Team</th>
+                    <th className="py-2">Coordinator Email</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -163,6 +175,16 @@ function ImportUsersPage() {
                       <td className="py-2">{row.email}</td>
                       <td className="py-2">
                         <Badge variant="secondary">{ROLE_LABELS[row.role]}</Badge>
+                      </td>
+                      <td className="py-2">{row.team ?? "—"}</td>
+                      <td className="py-2">
+                        {row.coordinator_email ?? "—"}
+                        {row.coordinator_email && knownEmails && !knownEmails.has(row.coordinator_email) ? (
+                          <span className="ml-2 text-xs text-destructive">No existe</span>
+                        ) : null}
+                        {knownEmails?.has(row.email) ? (
+                          <span className="ml-2 text-xs text-muted-foreground">(correo ya registrado)</span>
+                        ) : null}
                       </td>
                     </tr>
                   ))}

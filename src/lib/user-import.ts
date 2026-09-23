@@ -4,6 +4,8 @@ export interface ParsedUserRow {
   name: string;
   email: string;
   role: ImportRole;
+  team?: string;
+  coordinator_email?: string;
 }
 
 export interface UserImportParseResult {
@@ -29,7 +31,7 @@ const ROLE_ALIASES: Record<string, ImportRole> = {
   qa: "qa",
 };
 
-export const USERS_CSV_TEMPLATE = "name,email,role\nEmanuel Ramirez,emanuel@english4kidsonline.com,senior\nCarlos Lopez,carlos.lopez@english4kidsonline.com,coordinator\nMaria Perez,maria.perez@english4kidsonline.com,coach\n";
+export const USERS_CSV_TEMPLATE = "name,email,role,team,coordinator_email\nLucas Vaghetti Bravo,lucas@email.com,coach,Spider Force,madelin.cisneros@english4kidsonline.com\nEmanuel Ramirez,emanuel@english4kidsonline.com,senior\nCarlos Lopez,carlos.lopez@english4kidsonline.com,coordinator\nMaria Perez,maria.perez@english4kidsonline.com,coach\n";
 
 export function normalizeRole(value: string): ImportRole | null {
   const key = value.trim().toLowerCase();
@@ -75,6 +77,8 @@ export function parseUsersCsv(text: string): UserImportParseResult {
   const idxName = hasHeader ? header.indexOf("name") : 0;
   const idxEmail = hasHeader ? header.indexOf("email") : 1;
   const idxRole = hasHeader ? header.indexOf("role") : 2;
+  const idxTeam = hasHeader ? header.indexOf("team") : 3;
+  const idxCoord = hasHeader ? header.indexOf("coordinator_email") : 4;
 
   const seen = new Set<string>();
   for (let i = hasHeader ? 1 : 0; i < lines.length; i += 1) {
@@ -84,6 +88,12 @@ export function parseUsersCsv(text: string): UserImportParseResult {
     const email = (cells[idxEmail] ?? "").trim().toLowerCase();
     const roleRaw = (cells[idxRole] ?? "").trim();
     const line = i + 1;
+    const team = idxTeam >= 0 ? (cells[idxTeam] ?? "").trim() : "";
+    const coord = idxCoord >= 0 ? (cells[idxCoord] ?? "").trim().toLowerCase() : "";
+    if (coord && !isValidEmail(coord)) {
+      errors.push({ line, raw, message: `Correo de coordinador inválido: "${coord}"` });
+      continue;
+    }
 
     if (!isValidEmail(email)) {
       errors.push({ line, raw, message: `Correo inválido: "${email || "(vacío)"}"` });
@@ -99,7 +109,13 @@ export function parseUsersCsv(text: string): UserImportParseResult {
       continue;
     }
     seen.add(email);
-    rows.push({ name: name || email.split("@")[0]!, email, role });
+    rows.push({
+      name: name || email.split("@")[0]!,
+      email,
+      role,
+      ...(team ? { team } : {}),
+      ...(coord ? { coordinator_email: coord } : {}),
+    });
   }
 
   return { rows, errors };
