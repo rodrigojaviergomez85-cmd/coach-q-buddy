@@ -397,7 +397,7 @@ function CoachesPage() {
     }
 
     const profilesByEmail = new Map(
-      (profilesQuery.data ?? []).map((p) => [p.email.toLowerCase(), p.id] as const),
+      (profilesQuery.data ?? []).map((p) => [(p.email ?? "").toLowerCase(), p.id] as const),
     );
     const missing: string[] = [];
     const payloads: ImportPayload[] = [];
