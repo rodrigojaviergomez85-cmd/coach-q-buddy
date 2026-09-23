@@ -667,6 +667,7 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          score_rule: string | null
           scoring: string | null
           sort_order: number | null
           source_sheet: string | null
@@ -679,6 +680,7 @@ export type Database = {
           id?: string
           name: string
           notes?: string | null
+          score_rule?: string | null
           scoring?: string | null
           sort_order?: number | null
           source_sheet?: string | null
@@ -691,6 +693,7 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          score_rule?: string | null
           scoring?: string | null
           sort_order?: number | null
           source_sheet?: string | null
