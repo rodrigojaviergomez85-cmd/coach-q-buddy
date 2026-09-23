@@ -45,7 +45,7 @@ function downloadTemplate() {
 }
 
 const statusStyles: Record<ImportUserResult["status"], { label: string; className: string }> = {
-  invited: { label: "Invitación enviada", className: "bg-emerald-100 text-emerald-800" },
+  created: { label: "Created", className: "bg-emerald-100 text-emerald-800" },
   exists: { label: "Ya existe", className: "bg-amber-100 text-amber-900" },
   error: { label: "Error", className: "bg-red-100 text-red-800" },
 };
@@ -79,8 +79,8 @@ function ImportUsersPage() {
       setResults(data.results);
       setParsed(null);
       void queryClient.invalidateQueries({ queryKey: ["profiles"] });
-      const ok = data.results.filter((r) => r.status === "invited").length;
-      toast.success(`${ok} invitación(es) enviada(s) de ${data.results.length} filas`);
+      const ok = data.results.filter((r) => r.status === "created").length;
+      toast.success(`${ok} usuario(s) creado(s) de ${data.results.length} filas`);
     },
     onError: (error: Error) => toast.error(error.message || "No se pudo importar"),
   });
@@ -105,7 +105,7 @@ function ImportUsersPage() {
     <>
       <PageHeader
         title="Importar usuarios"
-        subtitle="Carga un CSV con nombre, correo y rol. Cada usuario recibe una invitación para crear su propia contraseña."
+        subtitle="Carga un CSV con nombre, correo y rol. Los usuarios se crean activos con una contraseña temporal que solo se muestra en esta pantalla."
         actions={
           <Button variant="outline" onClick={downloadTemplate}>
             <Download className="mr-2 size-4" /> Descargar plantilla CSV
@@ -214,6 +214,7 @@ function ImportUsersPage() {
                   <th className="py-2">Nombre</th>
                   <th className="py-2">Email</th>
                   <th className="py-2">Rol</th>
+                  <th className="py-2">Temporary Password</th>
                   <th className="py-2">Estado</th>
                 </tr>
               </thead>
@@ -223,6 +224,7 @@ function ImportUsersPage() {
                     <td className="py-2">{row.name}</td>
                     <td className="py-2">{row.email}</td>
                     <td className="py-2">{row.role}</td>
+                    <td className="py-2 font-mono text-xs">{row.tempPassword ?? "—"}</td>
                     <td className="py-2">
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusStyles[row.status].className}`}
