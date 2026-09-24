@@ -271,6 +271,7 @@ export type Database = {
           notes: string | null
           phone: string | null
           schedule: string | null
+          senior_id: string | null
           senior_name: string | null
           tenure_months: number | null
           updated_at: string
@@ -292,6 +293,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           schedule?: string | null
+          senior_id?: string | null
           senior_name?: string | null
           tenure_months?: number | null
           updated_at?: string
@@ -313,6 +315,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           schedule?: string | null
+          senior_id?: string | null
           senior_name?: string | null
           tenure_months?: number | null
           updated_at?: string
@@ -321,6 +324,13 @@ export type Database = {
           {
             foreignKeyName: "coaches_coordinator_id_fkey"
             columns: ["coordinator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaches_senior_id_fkey"
+            columns: ["senior_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
