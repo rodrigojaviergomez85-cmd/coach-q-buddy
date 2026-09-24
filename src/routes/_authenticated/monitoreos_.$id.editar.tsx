@@ -1,0 +1,4 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { MonitoringWizard } from "@/components/monitoring/MonitoringWizard";
+export const Route = createFileRoute("/_authenticated/monitoreos_/$id/editar")({ head: () => ({ meta: [{ title: "Editar monitoreo · QA Coaches E4K" }, { name: "description", content: "Editar un monitoreo de calidad." }, { property: "og:title", content: "Editar monitoreo · QA Coaches E4K" }, { property: "og:description", content: "Editar un monitoreo de calidad." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }), component: Page });
+function Page() { const { id } = Route.useParams(); return <MonitoringWizard monitoringId={id} />; }
