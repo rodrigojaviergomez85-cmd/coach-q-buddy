@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Download, Upload, Users } from "lucide-react";
 import { toast } from "sonner";
 
+import { AssignmentImport } from "@/components/admin/AssignmentImport";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -203,6 +204,8 @@ function ImportCoachesPage() {
           </CardContent>
         </Card>
       ) : null}
+
+      <AssignmentImport />
     </>
   );
 }
