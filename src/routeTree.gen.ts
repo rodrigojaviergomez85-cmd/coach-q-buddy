@@ -29,7 +29,7 @@ import { Route as AuthenticatedMonitoreosNuevoRouteImport } from './routes/_auth
 import { Route as AuthenticatedPlantillasIndexRouteImport } from './routes/_authenticated/plantillas.index'
 import { Route as AuthenticatedPlantillasTemplateIdRouteImport } from './routes/_authenticated/plantillas.$templateId'
 import { Route as AuthenticatedAdminUsersImportRouteImport } from './routes/_authenticated/admin.users.import'
-import { Route as AuthenticatedMonitoreosIdEditarRouteImport } from './routes/_authenticated/monitoreos.$id.editar'
+import { Route as AuthenticatedMonitoreosIdEditarRouteImport } from './routes/_authenticated/monitoreos_.$id.editar'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -141,9 +141,9 @@ const AuthenticatedAdminUsersImportRoute =
   } as any)
 const AuthenticatedMonitoreosIdEditarRoute =
   AuthenticatedMonitoreosIdEditarRouteImport.update({
-    id: '/editar',
-    path: '/editar',
-    getParentRoute: () => AuthenticatedMonitoreosIdRoute,
+    id: '/monitoreos_/$id/editar',
+    path: '/monitoreos/$id/editar',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -159,7 +159,7 @@ export interface FileRoutesByFullPath {
   '/betty/calibracion': typeof AuthenticatedBettyCalibracionRoute
   '/betty/nuevo': typeof AuthenticatedBettyNuevoRoute
   '/coaches/$coachId': typeof AuthenticatedCoachesCoachIdRoute
-  '/monitoreos/$id': typeof AuthenticatedMonitoreosIdRouteWithChildren
+  '/monitoreos/$id': typeof AuthenticatedMonitoreosIdRoute
   '/monitoreos/nuevo': typeof AuthenticatedMonitoreosNuevoRoute
   '/plantillas/$templateId': typeof AuthenticatedPlantillasTemplateIdRoute
   '/betty/': typeof AuthenticatedBettyIndexRoute
@@ -181,7 +181,7 @@ export interface FileRoutesByTo {
   '/betty/calibracion': typeof AuthenticatedBettyCalibracionRoute
   '/betty/nuevo': typeof AuthenticatedBettyNuevoRoute
   '/coaches/$coachId': typeof AuthenticatedCoachesCoachIdRoute
-  '/monitoreos/$id': typeof AuthenticatedMonitoreosIdRouteWithChildren
+  '/monitoreos/$id': typeof AuthenticatedMonitoreosIdRoute
   '/monitoreos/nuevo': typeof AuthenticatedMonitoreosNuevoRoute
   '/plantillas/$templateId': typeof AuthenticatedPlantillasTemplateIdRoute
   '/betty': typeof AuthenticatedBettyIndexRoute
@@ -205,14 +205,14 @@ export interface FileRoutesById {
   '/_authenticated/betty/calibracion': typeof AuthenticatedBettyCalibracionRoute
   '/_authenticated/betty/nuevo': typeof AuthenticatedBettyNuevoRoute
   '/_authenticated/coaches/$coachId': typeof AuthenticatedCoachesCoachIdRoute
-  '/_authenticated/monitoreos/$id': typeof AuthenticatedMonitoreosIdRouteWithChildren
+  '/_authenticated/monitoreos/$id': typeof AuthenticatedMonitoreosIdRoute
   '/_authenticated/monitoreos/nuevo': typeof AuthenticatedMonitoreosNuevoRoute
   '/_authenticated/plantillas/$templateId': typeof AuthenticatedPlantillasTemplateIdRoute
   '/_authenticated/betty/': typeof AuthenticatedBettyIndexRoute
   '/_authenticated/monitoreos/': typeof AuthenticatedMonitoreosIndexRoute
   '/_authenticated/plantillas/': typeof AuthenticatedPlantillasIndexRoute
   '/_authenticated/admin/users/import': typeof AuthenticatedAdminUsersImportRoute
-  '/_authenticated/monitoreos/$id/editar': typeof AuthenticatedMonitoreosIdEditarRoute
+  '/_authenticated/monitoreos_/$id/editar': typeof AuthenticatedMonitoreosIdEditarRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -281,7 +281,7 @@ export interface FileRouteTypes {
     | '/_authenticated/monitoreos/'
     | '/_authenticated/plantillas/'
     | '/_authenticated/admin/users/import'
-    | '/_authenticated/monitoreos/$id/editar'
+    | '/_authenticated/monitoreos_/$id/editar'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -434,12 +434,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUsersImportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/monitoreos/$id/editar': {
-      id: '/_authenticated/monitoreos/$id/editar'
-      path: '/editar'
+    '/_authenticated/monitoreos_/$id/editar': {
+      id: '/_authenticated/monitoreos_/$id/editar'
+      path: '/monitoreos/$id/editar'
       fullPath: '/monitoreos/$id/editar'
       preLoaderRoute: typeof AuthenticatedMonitoreosIdEditarRouteImport
-      parentRoute: typeof AuthenticatedMonitoreosIdRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
@@ -455,20 +455,6 @@ const AuthenticatedCoachesRouteChildren: AuthenticatedCoachesRouteChildren = {
 const AuthenticatedCoachesRouteWithChildren =
   AuthenticatedCoachesRoute._addFileChildren(AuthenticatedCoachesRouteChildren)
 
-interface AuthenticatedMonitoreosIdRouteChildren {
-  AuthenticatedMonitoreosIdEditarRoute: typeof AuthenticatedMonitoreosIdEditarRoute
-}
-
-const AuthenticatedMonitoreosIdRouteChildren: AuthenticatedMonitoreosIdRouteChildren =
-  {
-    AuthenticatedMonitoreosIdEditarRoute: AuthenticatedMonitoreosIdEditarRoute,
-  }
-
-const AuthenticatedMonitoreosIdRouteWithChildren =
-  AuthenticatedMonitoreosIdRoute._addFileChildren(
-    AuthenticatedMonitoreosIdRouteChildren,
-  )
-
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalizadorRoute: typeof AuthenticatedAnalizadorRoute
   AuthenticatedCoachesRoute: typeof AuthenticatedCoachesRouteWithChildren
@@ -477,13 +463,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBettyIdRoute: typeof AuthenticatedBettyIdRoute
   AuthenticatedBettyCalibracionRoute: typeof AuthenticatedBettyCalibracionRoute
   AuthenticatedBettyNuevoRoute: typeof AuthenticatedBettyNuevoRoute
-  AuthenticatedMonitoreosIdRoute: typeof AuthenticatedMonitoreosIdRouteWithChildren
+  AuthenticatedMonitoreosIdRoute: typeof AuthenticatedMonitoreosIdRoute
   AuthenticatedMonitoreosNuevoRoute: typeof AuthenticatedMonitoreosNuevoRoute
   AuthenticatedPlantillasTemplateIdRoute: typeof AuthenticatedPlantillasTemplateIdRoute
   AuthenticatedBettyIndexRoute: typeof AuthenticatedBettyIndexRoute
   AuthenticatedMonitoreosIndexRoute: typeof AuthenticatedMonitoreosIndexRoute
   AuthenticatedPlantillasIndexRoute: typeof AuthenticatedPlantillasIndexRoute
   AuthenticatedAdminUsersImportRoute: typeof AuthenticatedAdminUsersImportRoute
+  AuthenticatedMonitoreosIdEditarRoute: typeof AuthenticatedMonitoreosIdEditarRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -494,7 +481,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBettyIdRoute: AuthenticatedBettyIdRoute,
   AuthenticatedBettyCalibracionRoute: AuthenticatedBettyCalibracionRoute,
   AuthenticatedBettyNuevoRoute: AuthenticatedBettyNuevoRoute,
-  AuthenticatedMonitoreosIdRoute: AuthenticatedMonitoreosIdRouteWithChildren,
+  AuthenticatedMonitoreosIdRoute: AuthenticatedMonitoreosIdRoute,
   AuthenticatedMonitoreosNuevoRoute: AuthenticatedMonitoreosNuevoRoute,
   AuthenticatedPlantillasTemplateIdRoute:
     AuthenticatedPlantillasTemplateIdRoute,
@@ -502,6 +489,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMonitoreosIndexRoute: AuthenticatedMonitoreosIndexRoute,
   AuthenticatedPlantillasIndexRoute: AuthenticatedPlantillasIndexRoute,
   AuthenticatedAdminUsersImportRoute: AuthenticatedAdminUsersImportRoute,
+  AuthenticatedMonitoreosIdEditarRoute: AuthenticatedMonitoreosIdEditarRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
