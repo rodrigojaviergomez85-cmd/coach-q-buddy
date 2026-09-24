@@ -103,3 +103,65 @@ export const importCoachesByName = createServerFn({ method: "POST" })
     }
     return { results };
   });
+
+const assignSchema = z.object({
+  rows: z
+    .array(z.object({ coach: z.string().max(200), coordinator: z.string().max(200), senior: z.string().max(200) }))
+    .min(1)
+    .max(3000),
+});
+
+export interface AssignResult {
+  coach: string;
+  coordinator: string;
+  senior: string;
+  status: "assigned" | "updated" | "unchanged" | "error";
+  message?: string;
+}
+
+export const importAssignments = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => assignSchema.parse(input))
+  .handler(async ({ data, context }): Promise<{ results: AssignResult[] }> => {
+    const { data: me } = await context.supabase.from("profiles").select("role, active").eq("id", context.userId).maybeSingle();
+    if (!me || !me.active || (me.role !== "admin" && me.role !== "senior")) {
+      throw new Error("No tienes permiso para asignar coaches.");
+    }
+    const { matchByName } = await import("@/lib/assignment-import");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: profiles, error } = await supabaseAdmin.from("profiles").select("id, full_name, role");
+    if (error) throw new Error(error.message);
+    const { data: coaches, error: cErr } = await supabaseAdmin.from("coaches").select("id, full_name, coordinator_id, senior_id");
+    if (cErr) throw new Error(cErr.message);
+
+    const coords = (profiles ?? []).filter((p) => ["coordinador", "coordinator"].includes(p.role)).map((p) => ({ id: p.id, name: p.full_name }));
+    const seniors = (profiles ?? []).filter((p) => p.role === "senior").map((p) => ({ id: p.id, name: p.full_name }));
+    const coachList = (coaches ?? []).map((c) => ({ ...c, name: c.full_name }));
+
+    const results: AssignResult[] = [];
+    for (const row of data.rows) {
+      const coach = matchByName(row.coach, coachList);
+      const coord = matchByName(row.coordinator, coords);
+      const senior = matchByName(row.senior, seniors);
+      const missing = [!coach && row.coach, !coord && row.coordinator, !senior && row.senior].filter(Boolean);
+      if (!coach || !coord || !senior) {
+        const names = missing.length ? missing : [row.coach || "(vacío)"];
+        results.push({ ...row, status: "error", message: names.map((n) => `User not found: ${n}`).join(" · ") });
+        continue;
+      }
+      const had = coach.coordinator_id || coach.senior_id;
+      if (coach.coordinator_id === coord.id && coach.senior_id === senior.id) {
+        results.push({ ...row, status: "unchanged" });
+        continue;
+      }
+      const { error: uErr } = await supabaseAdmin
+        .from("coaches")
+        .update({ coordinator_id: coord.id, coordinator_name: coord.name, senior_id: senior.id, senior_name: senior.name })
+        .eq("id", coach.id);
+      if (uErr) { results.push({ ...row, status: "error", message: uErr.message }); continue; }
+      coach.coordinator_id = coord.id;
+      coach.senior_id = senior.id;
+      results.push({ ...row, status: had ? "updated" : "assigned" });
+    }
+    return { results };
+  });

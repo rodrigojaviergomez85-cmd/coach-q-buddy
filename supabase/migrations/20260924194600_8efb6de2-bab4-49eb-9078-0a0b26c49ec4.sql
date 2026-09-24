@@ -1,0 +1,1 @@
+ALTER TABLE public.coaches ADD COLUMN IF NOT EXISTS senior_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL;
